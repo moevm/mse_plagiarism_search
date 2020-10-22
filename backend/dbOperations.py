@@ -117,8 +117,7 @@ def addOneFile(dir, fileName, entryName = ""):
 	con.commit()
 
 	con.close()
-	
-	return "AAAAAAAAA"
+
 
 
 
