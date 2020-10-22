@@ -78,19 +78,16 @@ def addOneFile(dir, fileName, entryName = ""):
 	
 	codeInBytes = str.encode(code, encoding='utf-8')
 	q = Query.into(db.tables["Entry"]).columns('name', 'createdAt').insert(entryName, functions.CurTimestamp())
-	print(str(q))
 	cur.execute(str(q))
 	con.commit()
 	
 	###нужна обработка ошибок
 	q = Query.from_(db.tables["Entry"]).select('id').orderby('id', order=Order.desc).limit(1)
-	print(str(q))
 	cur.execute(str(q))
 	
 	rows = cur.fetchall()
 	id = 0
 	for row in rows:
-		print(row[0])
 		id = row[0]
 		break
 	hash_object = hashlib.sha256(codeInBytes)
