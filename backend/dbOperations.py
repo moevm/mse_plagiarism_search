@@ -1,33 +1,22 @@
 import os
 import hashlib
-from pypika import Query, Table, Field, Schema, CustomFunction, Order, functions
-import pypikaInit
-import psycopg2
-
-from flask import Flask, request, redirect, url_for, send_from_directory
-from werkzeug.utils import secure_filename
-app = Flask(__name__)
-UPLOAD_FOLDER = os.getcwd()
-#ALLOWED_EXTENSIONS = set(['txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'])
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-
+from app import * #imported: con, db, app, #ALLOWED_EXTENSIONS
 
 
 def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1] in ALLOWED_EXTENSIONS
 
-#загрузка файлов. Нужно проверить работоспособность.
+#Загрузка файлов в БД. Работает!
 @app.route('/upload', methods=['POST'])#methods=['GET', 'POST'])
 def upload_file():
-    if request.method == 'POST':
-        file = request.files['file']
-        if file: #and allowed_file(file.filename):
-            filename = secure_filename(file.filename)
-            file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-			addOneFile(app.config['UPLOAD_FOLDER'], filename, "testEntry")
-            return redirect(url_for('uploaded_file',
-                                    filename=filename))
+	if request.method == 'POST':
+		file = request.files['file']
+		if file: #and allowed_file(file.filename):
+			filename = secure_filename(file.filename)
+			file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+			addOneFile(app.config['UPLOAD_FOLDER'], filename) #TODO: Удалить файл после всех операций?
+			return redirect(url_for('uploaded_file', filename=filename))
     # return '''
     # <!doctype html>
     # <title>Upload new File</title>
@@ -39,32 +28,18 @@ def upload_file():
     # '''
 	
 	
-@app.route('/uploads/<filename>')
+@app.route('/uploads/<filename>') #временная штука для проверок
 def uploaded_file(filename):
     return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
-							   
-def addOneFile(dir, fileName, entryName = ""): 
 
-	con = psycopg2.connect(
-		database="postgres", 
-		user="postgres", 
-		password="1234", 
-		host="127.0.0.1", 
-		port="5432"
-	)
-	cur = con.cursor()
-	
-	db = pypikaInit.DBObjects()
+#TODO: Осмысленное entryName
+#	   Хранить не весь путь для файла, а только от папки загрузок 								   
+def addOneFile(dir, fileName, entryName = ""): 
 
 	cwd = os.getcwd()
 	
-	try:
-		os.chdir(dir)
-		
-	except:
-		os.chdir(cwd)
-		print("Wrong path")
-		return
+	os.chdir(dir)
+
 	if len(entryName) == 0:
 		entryName = dir
 	code = ""
@@ -78,78 +53,48 @@ def addOneFile(dir, fileName, entryName = ""):
 	
 	codeInBytes = str.encode(code, encoding='utf-8')
 	q = Query.into(db.tables["Entry"]).columns('name', 'createdAt').insert(entryName, functions.CurTimestamp())
-	cur.execute(str(q))
-	con.commit()
 	
-	###нужна обработка ошибок
-	q = Query.from_(db.tables["Entry"]).select('id').orderby('id', order=Order.desc).limit(1)
-	cur.execute(str(q))
-	
-	rows = cur.fetchall()
 	id = 0
-	for row in rows:
-		id = row[0]
-		break
+	executeQ(q)
+	q = Query.from_(db.tables["Entry"]).select('id').orderby('id', order=Order.desc).limit(1)
+	id = getId(executeQ(q, True))
+
 	hash_object = hashlib.sha256(codeInBytes)
 
-	q = Query.into(db.tables["File"]).columns("entryId", "path", "hash").insert(id, os.path.join(dir, fileName), hash_object.hexdigest())
-	cur.execute(str(q))
-	con.commit()
-	
-	###нужна обработка ошибок
-	q = Query.from_(db.tables["File"]).select('id').orderby('id', order=Order.desc).limit(1)
-	cur.execute(str(q))
-	
-	rows = cur.fetchall()
 	fileId = 0
-	for row in rows:
-		fileId = row[0]
-		break
-		
+	q = Query.into(db.tables["File"]).columns("entryId", "path", "hash").insert(id, os.path.join(dir, fileName), hash_object.hexdigest())
+	executeQ(q)
+	q = Query.from_(db.tables["File"]).select('id').orderby('id', order=Order.desc).limit(1)
+	fileId = getId(executeQ(q, True))
 		
 	for i in range(0, (len(codeInBytes)//255)+1):
 		splittedCode.append(bytes.decode(codeInBytes[0+(i*255):min(255*(i+1), len(codeInBytes))], encoding='utf-8'))
 		q = Query.into(db.tables["CodeFragment"]).columns("fileId", "order", "text", "metaphone").insert(fileId, i, splittedCode[i], db.func["metaphone"](splittedCode[i], 255))
-		cur.execute(str(q))
-	con.commit()
-
-	con.close()
-
-
+		executeQ(q)
+		
+	os.chdir(cwd)
 
 
 def deleteEntry(id):
-	con = psycopg2.connect(
-		database="postgres", 
-		user="postgres", 
-		password="1234", 
-		host="127.0.0.1", 
-		port="5432"
-	)
-	cur = con.cursor()
-	
-	db = pypikaInit.DBObjects()
-	
+
 	q = Query.from_(db.tables["Entry"]).delete().where(db.tables["Entry"].id == id)
-	cur.execute(str(q))
-	con.commit()
-	
-	con.close()
+	executeQ(q)
+
 	
 def deleteAll():
-	con = psycopg2.connect(
-		database="postgres", 
-		user="postgres", 
-		password="1234", 
-		host="127.0.0.1", 
-		port="5432"
-	)
-	cur = con.cursor()
-	
-	db = pypikaInit.DBObjects()
-	
+
 	q = Query.from_(db.tables["Entry"]).delete()
-	cur.execute(str(q))
-	con.commit()
-	
-	con.close()
+	executeQ(q)
+
+
+def getId(rows):
+	for row in rows:
+		return row[0]
+
+def executeQ(q, isFetchable=False):
+	with con:
+		with con.cursor() as cur:
+			cur.execute(str(q))
+			if isFetchable:
+				return cur.fetchall()
+				
