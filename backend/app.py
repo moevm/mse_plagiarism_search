@@ -1,3 +1,4 @@
+import configparser
 from pypika import Query, Table, Field, Schema, CustomFunction, Order, functions
 from pypikaInit import db
 import psycopg2
@@ -6,14 +7,19 @@ import traceback
 from flask import Flask, request, redirect, url_for, send_from_directory, jsonify
 from werkzeug.utils import secure_filename
 
+config = configparser.ConfigParser()
+config.read("config.ini")
+dbConfig = config["databaseConfig"]
+
+
 class singleConnection:
 	def __init__(self):
 		self.con = psycopg2.connect(
-			database="postgres", 
-			user="postgres", 
-			password="1234", 
-			host="127.0.0.1", 
-			port="5432"
+			database=dbConfig["database"], 
+			user=dbConfig["user"], 
+			password=dbConfig["password"], 
+			host=dbConfig["host"], 
+			port=dbConfig["port"]
 		)
 	def __new__(self):
 		if not hasattr(self, 'instance'):
@@ -24,10 +30,9 @@ class singleConnection:
 		self.con.close()
 
 con = singleConnection().con
-
 app = Flask(__name__)
-UPLOAD_FOLDER = os.path.join(os.getcwd(), "uploads")
-#ALLOWED_EXTENSIONS = set(['txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'])
+UPLOAD_FOLDER = os.path.join(os.getcwd(), config["app"]["uploadFolder"])
+ALLOWED_EXTENSIONS = set(config["allowed_extensions"].keys())
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 @app.errorhandler(Exception)

@@ -1,6 +1,12 @@
 import os
 import hashlib
-from app import * #imported: con, db, app, #ALLOWED_EXTENSIONS
+import configparser
+from pypika import Query, Table, Field, Schema, CustomFunction, Order, functions
+import psycopg2
+import traceback
+from flask import Flask, request, redirect, url_for, send_from_directory, jsonify
+from werkzeug.utils import secure_filename
+from app import con, db, app, config, ALLOWED_EXTENSIONS
 
 
 def allowed_file(filename):
@@ -12,7 +18,7 @@ def allowed_file(filename):
 def upload_file():
 	if request.method == 'POST':
 		file = request.files['file']
-		if file: #and allowed_file(file.filename):
+		if file and allowed_file(file.filename):
 			filename = secure_filename(file.filename)
 			file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
 			addOneFile(app.config['UPLOAD_FOLDER'], filename) #TODO: Удалить файл после всех операций?
