@@ -33,6 +33,7 @@ con = singleConnection().con
 app = Flask(__name__)
 UPLOAD_FOLDER = os.path.join(os.getcwd(), config["app"]["uploadFolder"])
 ALLOWED_EXTENSIONS = set(config["allowed_extensions"].keys())
+ALLOWED_ARCHIVES = set(config["allowed_archives"].keys())
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 @app.errorhandler(Exception)
