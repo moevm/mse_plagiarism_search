@@ -6,27 +6,45 @@ import psycopg2
 import traceback
 from flask import Flask, request, redirect, url_for, send_from_directory, jsonify
 from werkzeug.utils import secure_filename
-from app import con, db, app, config, ALLOWED_EXTENSIONS
-
+from app import con, db, app, config, ALLOWED_EXTENSIONS, ALLOWED_ARCHIVES
+import zipfile
+import tempfile
 
 def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1] in ALLOWED_EXTENSIONS
 
+def allowed_archive(filename):
+	return '.' in filename and \
+           filename.rsplit('.', 1)[1] in ALLOWED_ARCHIVES
+		   
+def allowed_file_custom(filename, allowedExtensions):
+	return '.' in filename and \
+           filename.rsplit('.', 1)[1] in allowedExtensions
+		   
 #Загрузка файлов в БД. Работает!
 @app.route('/upload', methods=['POST'])#methods=['GET', 'POST'])
 def upload_file():
 	if request.method == 'POST':
 		file = request.files['file']
-		if file and allowed_file(file.filename):
+		if file and (allowed_file(file.filename) or allowed_archive(file.filename)):
 			filename = secure_filename(file.filename)
 			file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-			addOneFile(app.config['UPLOAD_FOLDER'], filename) #TODO: Удалить файл после всех операций?
-			return redirect(url_for('uploaded_file', filename=filename))
+			if ".zip" in filename:
+				with tempfile.TemporaryDirectory() as tmp:
+					tmp_dir_name = tmp
+					path = os.path.join(os.getcwd(), tmp_dir_name)
+					with zipfile.ZipFile(os.path.join(app.config['UPLOAD_FOLDER'], filename)) as zf:
+						zf.extractall(path)
+						addManyFiles(path, filename)
+						return jsonify({"ok" : "ok"})
+			else:
+				addOneFile(app.config['UPLOAD_FOLDER'], filename) #TODO: Удалить файл после всех операций?
+				return redirect(url_for('uploaded_file', filename=filename))
     # return '''
     # <!doctype html>
     # <title>Upload new File</title>
-    # <h1>Upload new File</h1>
+    # <h1>Upload newsss File</h1>
     # <form action="" method=post enctype=multipart/form-data>
       # <p><input type=file name=file>
          # <input type=submit value=Upload>
@@ -40,14 +58,15 @@ def uploaded_file(filename):
 
 #TODO: Осмысленное entryName
 #	   Хранить не весь путь для файла, а только от папки загрузок 								   
-def addOneFile(dir, fileName, entryName = ""): 
+def addOneFile(dir, fileName, entryName = "", id = 0): 
 
 	cwd = os.getcwd()
 	
 	os.chdir(dir)
 
 	if len(entryName) == 0:
-		entryName = dir
+		entryName = filename
+		
 	code = ""
 	splittedCode = []
 	with open(os.path.join(dir, fileName), encoding='utf-8') as f:
@@ -58,12 +77,11 @@ def addOneFile(dir, fileName, entryName = ""):
 	code = code.replace("\t", "")
 	
 	codeInBytes = str.encode(code, encoding='utf-8')
-	q = Query.into(db.tables["Entry"]).columns('name', 'createdAt').insert(entryName, functions.CurTimestamp())
-	
-	id = 0
-	executeQ(q)
-	q = Query.from_(db.tables["Entry"]).select('id').orderby('id', order=Order.desc).limit(1)
-	id = getId(executeQ(q, True))
+	if id==0:
+		q = Query.into(db.tables["Entry"]).columns('name', 'createdAt').insert(entryName, functions.CurTimestamp())
+		executeQ(q)
+		q = Query.from_(db.tables["Entry"]).select('id').orderby('id', order=Order.desc).limit(1)
+		id = getId(executeQ(q, True))
 
 	hash_object = hashlib.sha256(codeInBytes)
 
@@ -79,14 +97,34 @@ def addOneFile(dir, fileName, entryName = ""):
 		executeQ(q)
 		
 	os.chdir(cwd)
+	
+	return id
+	
+def addManyFiles(dir, entryName, extensions = ALLOWED_EXTENSIONS):
 
-
-def deleteEntry(id):
-
-	q = Query.from_(db.tables["Entry"]).delete().where(db.tables["Entry"].id == id)
-	executeQ(q)
+	id = 0
+	for dirpath, dirnames, filenames in os.walk(dir):
+		# перебрать каталоги
+		#for dirname in dirnames:
+			#print("Каталог:", os.path.join(dirpath, dirname))
+		# перебрать файлы
+		for filename in filenames:
+			if allowed_file_custom(filename, extensions):
+				#print("Файл:", os.path.join(dirpath, filename))
+				if id==0:
+					id = addOneFile(dirpath, filename, entryName)
+				else:
+					addOneFile(dirpath, filename, entryName, id)
 
 	
+
+@app.route('/deleteEntry/<id>', methods=['DELETE'])
+def deleteEntry(id):
+
+	q = Query.from_(db.tables["Entry"]).delete().where(db.tables["Entry"].id == int(id))
+	executeQ(q)
+
+@app.route('/deleteAll', methods=['DELETE'])
 def deleteAll():
 
 	q = Query.from_(db.tables["Entry"]).delete()
