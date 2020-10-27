@@ -9,6 +9,8 @@ from werkzeug.utils import secure_filename
 from app import con, db, app, config, ALLOWED_EXTENSIONS, ALLOWED_ARCHIVES
 import zipfile
 import tempfile
+import sqlQueries
+
 
 def allowed_file(filename):
     return '.' in filename and \
@@ -161,3 +163,10 @@ def executeQ(q, isFetchable=False):
 			if isFetchable:
 				return cur.fetchall()
 				
+
+def dropAllTables():
+	with con:
+		with con.cursor() as cur:
+			cur.execute(sqlQueries.dropTables)
+	print("ALL TABLES WERE DELETED")
+			
