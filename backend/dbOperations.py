@@ -116,7 +116,26 @@ def addManyFiles(dir, entryName, extensions = ALLOWED_EXTENSIONS):
 				else:
 					addOneFile(dirpath, filename, entryName, id)
 
+@app.route('/getEntryFiles/<id>', methods=['GET'])
+def getEntryFiles(id):
+	q = Query.from_(db.tables["File"]).select("path").where(db.tables["File"].entryId == int(id))
+	return jsonify(executeQ(q, True))
 	
+@app.route('/getFile/<id>', methods=['GET'])
+def getFile(id):
+	q = Query.from_(db.tables["CodeFragment"]).select("text").where(db.tables["CodeFragment"].fileId == int(id)).orderby('order', order=Order.asc)
+	rows = executeQ(q, True)
+	text = ""
+	for row in rows:
+		text+=row[0]
+	return jsonify({"file":text})
+
+@app.route('/renameEntry/<id>', methods=['PUT'])
+def renameEntry(id):
+	#print(request.args)
+	q = Query.update(db.tables["Entry"]).set(db.tables["Entry"].name, request.args["name"]).where(db.tables["Entry"].id == int(id))
+	executeQ(q)
+	return jsonify(request.args)
 
 @app.route('/deleteEntry/<id>', methods=['DELETE'])
 def deleteEntry(id):
