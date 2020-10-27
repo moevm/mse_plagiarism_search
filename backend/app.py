@@ -6,11 +6,20 @@ import os
 import traceback
 from flask import Flask, request, redirect, url_for, send_from_directory, jsonify
 from werkzeug.utils import secure_filename
+import sqlQueries
 
 config = configparser.ConfigParser()
 config.read("config.ini")
 dbConfig = config["databaseConfig"]
 
+def createTablesIfNotExists(con):
+	with con:
+		with con.cursor() as cur:
+			cur.execute(sqlQueries.createSequences)
+			con.commit()
+			cur.execute(sqlQueries.createEntryTable)
+			cur.execute(sqlQueries.createFileTable)
+			cur.execute(sqlQueries.createCodeFragmentTable)
 
 class singleConnection:
 	def __init__(self):
@@ -21,6 +30,8 @@ class singleConnection:
 			host=dbConfig["host"], 
 			port=dbConfig["port"]
 		)
+		createTablesIfNotExists(self.con)
+		
 	def __new__(self):
 		if not hasattr(self, 'instance'):
 			self.instance = super(singleConnection, self).__new__(self)
@@ -44,5 +55,7 @@ def internal_error(exception):
 		response['traceback'] = traceback.format_exc()
 	return jsonify(response), 500
 
-	
+
+
+
 import dbOperations
