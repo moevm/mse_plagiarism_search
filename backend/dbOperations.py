@@ -67,7 +67,7 @@ def addOneFile(dir, fileName, entryName = "", id = 0):
 	os.chdir(dir)
 
 	if len(entryName) == 0:
-		entryName = filename
+		entryName = fileName
 		
 	code = ""
 	splittedCode = []
@@ -144,12 +144,14 @@ def deleteEntry(id):
 
 	q = Query.from_(db.tables["Entry"]).delete().where(db.tables["Entry"].id == int(id))
 	executeQ(q)
+	return jsonify({"ok":"ok"})
 
 @app.route('/deleteAll', methods=['DELETE'])
 def deleteAll():
 
 	q = Query.from_(db.tables["Entry"]).delete()
 	executeQ(q)
+	return jsonify({"ok":"ok"})
 
 
 def getId(rows):
