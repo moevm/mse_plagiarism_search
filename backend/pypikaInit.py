@@ -8,5 +8,6 @@ class DBObjects:
 		self.tables["CodeFragment"] = Table("CodeFragment")
 		self.func = {}
 		self.func["metaphone"] = CustomFunction('metaphone', ['text', 'len'])
+		self.func["levenshtein"] = CustomFunction('levenshtein', ['source', 'target'])
 
 db = DBObjects()
