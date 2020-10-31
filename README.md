@@ -27,6 +27,11 @@
 
 
 ## Разное
-## Запуск `yapf`
+### Запуск [`yapf`](https://github.com/google/yapf)
+Поможет сделать код приятнее на вид.
 * `pip install yapf`
 * В корне репозитория: `yapf -i -r **/*.py`
+Рекомендую призязать `yapf` к IDE, обычно возможности для интеграции находятся.
+
+### Семантические коммиты
+Договорились использовать [Angular Commit Guidelines](https://github.com/angular/angular/blob/master/CONTRIBUTING.md#-commit-message-format) для формата коммитов (`scope` будут свои).
