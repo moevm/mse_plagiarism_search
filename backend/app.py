@@ -12,33 +12,36 @@ config = configparser.ConfigParser()
 config.read("config.ini")
 dbConfig = config["databaseConfig"]
 
+
 def createTablesIfNotExists(con):
-	with con:
-		with con.cursor() as cur:
-			cur.execute(sqlQueries.createSequences)
-			con.commit()
-			cur.execute(sqlQueries.createEntryTable)
-			cur.execute(sqlQueries.createFileTable)
-			cur.execute(sqlQueries.createCodeFragmentTable)
+    with con:
+        with con.cursor() as cur:
+            cur.execute(sqlQueries.createSequences)
+            con.commit()
+            cur.execute(sqlQueries.createEntryTable)
+            cur.execute(sqlQueries.createFileTable)
+            cur.execute(sqlQueries.createCodeFragmentTable)
+
 
 class singleConnection:
-	def __init__(self):
-		self.con = psycopg2.connect(
-			database=dbConfig["database"], 
-			user=dbConfig["user"], 
-			password=dbConfig["password"], 
-			host=dbConfig["host"], 
-			port=dbConfig["port"]
-		)
-		createTablesIfNotExists(self.con)
-		
-	def __new__(self):
-		if not hasattr(self, 'instance'):
-			self.instance = super(singleConnection, self).__new__(self)
-		return self.instance
-		
-	def __del__(self):
-		self.con.close()
+    def __init__(self):
+        self.con = psycopg2.connect(
+            database=dbConfig["database"],
+            user=dbConfig["user"],
+            password=dbConfig["password"],
+            host=dbConfig["host"],
+            port=dbConfig["port"]
+        )
+        createTablesIfNotExists(self.con)
+
+    def __new__(self):
+        if not hasattr(self, 'instance'):
+            self.instance = super(singleConnection, self).__new__(self)
+        return self.instance
+
+    def __del__(self):
+        self.con.close()
+
 
 con = singleConnection().con
 app = Flask(__name__)
@@ -47,15 +50,14 @@ ALLOWED_EXTENSIONS = set(config["allowed_extensions"].keys())
 ALLOWED_ARCHIVES = set(config["allowed_archives"].keys())
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
+
 @app.errorhandler(Exception)
 def internal_error(exception):
-	app.logger.error(traceback.format_exc())
-	response = {'ok': False, 'message': repr(exception)}
-	if os.environ.get('FLASK_ENV') == 'development':
-		response['traceback'] = traceback.format_exc()
-	return jsonify(response), 500
-
-
+    app.logger.error(traceback.format_exc())
+    response = {'ok': False, 'message': repr(exception)}
+    if os.environ.get('FLASK_ENV') == 'development':
+        response['traceback'] = traceback.format_exc()
+    return jsonify(response), 500
 
 
 import dbOperations
