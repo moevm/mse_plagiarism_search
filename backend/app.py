@@ -9,7 +9,7 @@ from werkzeug.utils import secure_filename
 import sqlQueries
 
 config = configparser.ConfigParser()
-config.read("config.ini")
+config.read("config.ini", encoding='utf-8')
 dbConfig = config["databaseConfig"]
 
 
