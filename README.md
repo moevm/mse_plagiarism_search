@@ -25,7 +25,8 @@
 4. `python -m virtualenv venv`
 5. `source venv/bin/activate`
 6. Установить зависимости Python  
-`pip install -r requirements.txt`
+`pip install -r requirements.txt`  
+В случае проблем с `psycopg2`, ставить как `pip install psycopg2-binary`  
 7. Открыть ещё одну консоль с корнем репозитория, запустить там `docker-compose up`.  
 Будет развернута база `PostgresSQL` на порте. 5432 и pgAdmin на порте 81.
 8. (в первой консоли) `python -m flask run`  
