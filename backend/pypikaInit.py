@@ -9,5 +9,6 @@ class DBObjects:
 		self.func = {}
 		self.func["metaphone"] = CustomFunction('metaphone', ['text', 'len'])
 		self.func["levenshtein"] = CustomFunction('levenshtein', ['source', 'target'])
+		self.func["levenshtein_less_equal"] = CustomFunction('levenshtein_less_equal', ['source', 'target', 'max_d'])
 
 db = DBObjects()
