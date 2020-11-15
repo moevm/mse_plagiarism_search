@@ -71,4 +71,4 @@ def trueAlgo(fileId):
 	fullResult = [stringsFile, stringsRelevant, distances, result]
 	return fullResult
 
-trueAlgo(8)
+#trueAlgo(8)
