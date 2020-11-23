@@ -14,17 +14,17 @@ import sqlQueries
 
 def allowed_file(filename):
     return '.' in filename and \
-           filename.rsplit('.', 1)[1] in ALLOWED_EXTENSIONS
+            filename.rsplit('.', 1)[1] in ALLOWED_EXTENSIONS
 
 
 def allowed_archive(filename):
     return '.' in filename and \
-              filename.rsplit('.', 1)[1] in ALLOWED_ARCHIVES
+                filename.rsplit('.', 1)[1] in ALLOWED_ARCHIVES
 
 
 def allowed_file_custom(filename, allowedExtensions):
     return '.' in filename and \
-              filename.rsplit('.', 1)[1] in allowedExtensions
+                filename.rsplit('.', 1)[1] in allowedExtensions
 
 
 #Загрузка файлов в БД. Работает!
@@ -51,7 +51,11 @@ def upload_file():
                 addOneFile(
                     app.config['UPLOAD_FOLDER'], filename
                 )  #TODO: Удалить файл после всех операций?
-                return redirect(url_for('uploaded_file', filename=filename))
+                return jsonify(
+                    {"ok": "ok"}
+                )  #redirect(url_for('uploaded_file', filename=filename))
+        else:
+            return jsonify({"error": "failed"})
 
 
 # return '''
@@ -70,8 +74,29 @@ def uploaded_file(filename):
     return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
 
 
+def shorterString(string):
+    result = []
+    if len(string) <= 255:
+        result.append(string)
+        return result
+
+    for i in range(0, (len(string) // 253) + 1):
+        if i > 0:
+            result.append(
+                str.encode("~~", encoding="utf-8") +
+                string[0 + (i * 253):min(253 * (i + 1), len(string))]
+            )
+        else:
+            result.append(
+                string[0 + (i * 255):min(255 * (i + 1), len(string))]
+            )
+    for v in result:
+        print(len(v))
+    return result
+
+
 #TODO: Осмысленное entryName
-#	   Хранить не весь путь для файла, а только от папки загрузок
+#       Хранить не весь путь для файла, а только от папки загрузок
 def addOneFile(dir, fileName, entryName="", id=0):
 
     cwd = os.getcwd()
@@ -86,7 +111,7 @@ def addOneFile(dir, fileName, entryName="", id=0):
     with open(os.path.join(dir, fileName), encoding='utf-8') as f:
         code = f.read()
 
-    code = code.replace("\n", "")
+    #code = code.replace("\n", "")
     code = code.replace("\t", "")
 
     codeInBytes = str.encode(code, encoding='utf-8')
@@ -114,20 +139,27 @@ def addOneFile(dir, fileName, entryName="", id=0):
                    ).select('id').orderby('id', order=Order.desc).limit(1)
     fileId = getId(executeQ(q, True))
 
-    for i in range(0, (len(codeInBytes) // 255) + 1):
-        splittedCode.append(
-            bytes.decode(
-                codeInBytes[0 + (i * 255):min(255 *
-                                              (i + 1), len(codeInBytes))],
-                encoding='utf-8'
-            )
-        )
+    code = code.split("\n")
+    #shift = 0
+    for string in code:
+        stringInBytes = str.encode(string, encoding='utf-8')
+        strings = shorterString(stringInBytes)
+        for val in strings:
+            splittedCode.append(bytes.decode(val, encoding='utf-8'))
+    i = 0
+    for val in splittedCode:
         q = Query.into(db.tables["CodeFragment"]
                       ).columns("fileId", "order", "text", "metaphone").insert(
                           fileId, i, splittedCode[i],
                           db.func["metaphone"](splittedCode[i], 255)
                       )
         executeQ(q)
+        i += 1
+
+    #for i in range(0, (len(codeInBytes)//255)+1):
+    #    splittedCode.append(bytes.decode(codeInBytes[0+(i*255):min(255*(i+1), len(codeInBytes))], encoding='utf-8'))
+    #    q = Query.into(db.tables["CodeFragment"]).columns("fileId", "order", "text", "metaphone").insert(fileId, i, splittedCode[i], db.func["metaphone"](splittedCode[i], 255))
+    #    executeQ(q)
 
     os.chdir(cwd)
 
@@ -168,7 +200,12 @@ def getFile(id):
     rows = executeQ(q, True)
     text = ""
     for row in rows:
-        text += row[0]
+        if text == "":
+            text += row[0]
+        elif row[0][0] == "~" and row[0][1] == "~":
+            text += row[0][2:len(row)]
+        else:
+            text += "\n" + row[0]
     return jsonify({"file": text})
 
 
@@ -218,3 +255,6 @@ def dropAllTables():
         with con.cursor() as cur:
             cur.execute(sqlQueries.dropTables)
     print("ALL TABLES WERE DELETED")
+
+
+#dropAllTables()
