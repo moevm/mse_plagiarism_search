@@ -115,6 +115,14 @@ def addOneFile(dir, fileName, entryName="", id=0):
     code = code.replace("\t", "")
 
     codeInBytes = str.encode(code, encoding='utf-8')
+    hash_object = hashlib.sha256(codeInBytes)
+    
+    q = Query.from_(db.tables["File"]).select("id").where(db.tables["File"].hash == hash_object.hexdigest())
+    checkDuplicate = executeQ(q, True)
+    if checkDuplicate:
+        print("Дубликат!")
+        return
+        
     if id == 0:
         q = Query.into(
             db.tables["Entry"]
@@ -125,7 +133,7 @@ def addOneFile(dir, fileName, entryName="", id=0):
                        ).select('id').orderby('id', order=Order.desc).limit(1)
         id = getId(executeQ(q, True))
 
-    hash_object = hashlib.sha256(codeInBytes)
+    
 
     fileId = 0
     q = Query.into(db.tables["File"]).columns("entryId", "path",
