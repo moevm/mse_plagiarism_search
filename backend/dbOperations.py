@@ -13,6 +13,7 @@ import sqlQueries
 import contextlib
 import shutil
 
+
 @contextlib.contextmanager
 def temporary_directory(*args, **kwargs):
     d = tempfile.mkdtemp(*args, **kwargs)
@@ -20,6 +21,7 @@ def temporary_directory(*args, **kwargs):
         yield d
     finally:
         shutil.rmtree(d, ignore_errors=True)
+
 
 def allowed_file(filename):
     return '.' in filename and \
@@ -48,7 +50,7 @@ def upload_file():
             file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
             if ".zip" in filename:
                 #with tempfile.TemporaryDirectory() as tmp: #какого-то хера темпфайл не может почистить директорию за собой, хотя раньше все чистилось нормально. Винда говорит, что папка используется. Ошибки.
-                with temporary_directory() as tmp: #игнорируем ошибки.
+                with temporary_directory() as tmp:  #игнорируем ошибки.
                     tmp_dir_name = tmp
                     path = os.path.join(os.getcwd(), tmp_dir_name)
                     with zipfile.ZipFile(
@@ -126,13 +128,15 @@ def addOneFile(dir, fileName, entryName="", id=0):
 
     codeInBytes = str.encode(code, encoding='utf-8')
     hash_object = hashlib.sha256(codeInBytes)
-    
-    q = Query.from_(db.tables["File"]).select("id").where(db.tables["File"].hash == hash_object.hexdigest())
+
+    q = Query.from_(
+        db.tables["File"]
+    ).select("id").where(db.tables["File"].hash == hash_object.hexdigest())
     checkDuplicate = executeQ(q, True)
     if checkDuplicate:
         print("Дубликат!", checkDuplicate[0][0])
         return (0, checkDuplicate[0][0])
-        
+
     if id == 0:
         q = Query.into(
             db.tables["Entry"]
@@ -142,8 +146,6 @@ def addOneFile(dir, fileName, entryName="", id=0):
         q = Query.from_(db.tables["Entry"]
                        ).select('id').orderby('id', order=Order.desc).limit(1)
         id = getId(executeQ(q, True))
-
-    
 
     fileId = 0
     q = Query.into(db.tables["File"]).columns("entryId", "path",
@@ -227,16 +229,17 @@ def getFile(id):
             text += "\n" + row[0]
     return jsonify({"file": text})
 
+
 @app.route('/getAllFiles', methods=['GET'])
 def getAllFiles():
-    q = Query.from_(
-        db.tables["File"]
-    ).select("id","path").orderby('id', order=Order.asc)
+    q = Query.from_(db.tables["File"]
+                   ).select("id", "path").orderby('id', order=Order.asc)
     rows = executeQ(q, True)
     result = {}
     for row in rows:
         result[row[0]] = row[1]
     return jsonify(result)
+
 
 @app.route('/renameEntry/<id>', methods=['PUT'])
 def renameEntry(id):

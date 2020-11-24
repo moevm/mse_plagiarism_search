@@ -3,6 +3,7 @@ from pypika import Query, Table, Field, Schema, CustomFunction, Order, functions
 from flask import request, jsonify
 import os
 
+
 def getAllMetaphones():
     metaphones = {}
     texts = {}
@@ -70,7 +71,7 @@ def trueAlgo(fileId):
                 counter += 1
         distances.append(minD)
         counterF += 1
-    
+
     for i in range(len(stringsFile)):
         print(
             stringsFile[i], " ||| ", stringsRelevant[i], " ||| ", distances[i],
@@ -86,15 +87,15 @@ def loadAndCheckFile():
     if request.method == 'POST':
         file = request.files['file']
         if file and (
-            allowed_file(file.filename) #or allowed_archive(file.filename)
+            allowed_file(file.filename)  #or allowed_archive(file.filename)
         ):
             filename = secure_filename(file.filename)
             file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-            fileId = addOneFile(
-                app.config['UPLOAD_FOLDER'], filename
-            )[1]  #TODO: Удалить файл после всех операций?
+            fileId = addOneFile(app.config['UPLOAD_FOLDER'], filename)[1]
+            #TODO: Удалить файл после всех операций?
             return trueAlgo(fileId)
         else:
             return jsonify({"error": "failed"})
+
 
 #trueAlgo(8)
