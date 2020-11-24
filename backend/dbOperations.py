@@ -10,7 +10,16 @@ from app import con, db, app, config, ALLOWED_EXTENSIONS, ALLOWED_ARCHIVES
 import zipfile
 import tempfile
 import sqlQueries
+import contextlib
+import shutil
 
+@contextlib.contextmanager
+def temporary_directory(*args, **kwargs):
+    d = tempfile.mkdtemp(*args, **kwargs)
+    try:
+        yield d
+    finally:
+        shutil.rmtree(d, ignore_errors=True)
 
 def allowed_file(filename):
     return '.' in filename and \
@@ -38,7 +47,8 @@ def upload_file():
             filename = secure_filename(file.filename)
             file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
             if ".zip" in filename:
-                with tempfile.TemporaryDirectory() as tmp:
+                #with tempfile.TemporaryDirectory() as tmp: #какого-то хера темпфайл не может почистить директорию за собой, хотя раньше все чистилось нормально. Винда говорит, что папка используется. Ошибки.
+                with temporary_directory() as tmp: #игнорируем ошибки.
                     tmp_dir_name = tmp
                     path = os.path.join(os.getcwd(), tmp_dir_name)
                     with zipfile.ZipFile(
@@ -120,8 +130,8 @@ def addOneFile(dir, fileName, entryName="", id=0):
     q = Query.from_(db.tables["File"]).select("id").where(db.tables["File"].hash == hash_object.hexdigest())
     checkDuplicate = executeQ(q, True)
     if checkDuplicate:
-        print("Дубликат!")
-        return
+        print("Дубликат!", checkDuplicate[0][0])
+        return (0, checkDuplicate[0][0])
         
     if id == 0:
         q = Query.into(
@@ -171,7 +181,7 @@ def addOneFile(dir, fileName, entryName="", id=0):
 
     os.chdir(cwd)
 
-    return id
+    return (id, fileId)
 
 
 def addManyFiles(dir, entryName, extensions=ALLOWED_EXTENSIONS):
@@ -186,7 +196,8 @@ def addManyFiles(dir, entryName, extensions=ALLOWED_EXTENSIONS):
             if allowed_file_custom(filename, extensions):
                 #print("Файл:", os.path.join(dirpath, filename))
                 if id == 0:
-                    id = addOneFile(dirpath, filename, entryName)
+                    id = addOneFile(dirpath, filename, entryName)[0]
+                    print(id)
                 else:
                     addOneFile(dirpath, filename, entryName, id)
 

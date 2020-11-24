@@ -1,7 +1,7 @@
-from dbOperations import con, db, app, config, ALLOWED_EXTENSIONS, ALLOWED_ARCHIVES, executeQ
+from dbOperations import con, db, app, config, ALLOWED_EXTENSIONS, ALLOWED_ARCHIVES, executeQ, allowed_file, allowed_archive, secure_filename, addOneFile
 from pypika import Query, Table, Field, Schema, CustomFunction, Order, functions
-from flask import jsonify
-
+from flask import request, jsonify
+import os
 
 def getAllMetaphones():
     metaphones = {}
@@ -80,5 +80,21 @@ def trueAlgo(fileId):
     fullResult = [stringsFile, stringsRelevant, distances, result]
     return jsonify(fullResult)
 
+
+@app.route('/loadAndCheckFile', methods=['POST'])
+def loadAndCheckFile():
+    if request.method == 'POST':
+        file = request.files['file']
+        if file and (
+            allowed_file(file.filename) #or allowed_archive(file.filename)
+        ):
+            filename = secure_filename(file.filename)
+            file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+            fileId = addOneFile(
+                app.config['UPLOAD_FOLDER'], filename
+            )[1]  #TODO: Удалить файл после всех операций?
+            return trueAlgo(fileId)
+        else:
+            return jsonify({"error": "failed"})
 
 #trueAlgo(8)
