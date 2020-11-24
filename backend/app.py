@@ -5,6 +5,7 @@ import psycopg2
 import os
 import traceback
 from flask import Flask, request, redirect, url_for, send_from_directory, jsonify
+from flask_cors import CORS
 from werkzeug.utils import secure_filename
 import sqlQueries
 
@@ -45,6 +46,8 @@ class singleConnection:
 
 con = singleConnection().con
 app = Flask(__name__)
+cors = CORS(app, resources = {r'/*':{'origins':'*'}}, supports_credentials=True)
+app.config['CORS_HEADERS'] = 'Content-Type'
 UPLOAD_FOLDER = os.path.join(os.getcwd(), config["app"]["uploadFolder"])
 ALLOWED_EXTENSIONS = set(config["allowed_extensions"].keys())
 ALLOWED_ARCHIVES = set(config["allowed_archives"].keys())
