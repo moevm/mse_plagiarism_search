@@ -227,6 +227,16 @@ def getFile(id):
             text += "\n" + row[0]
     return jsonify({"file": text})
 
+@app.route('/getAllFiles', methods=['GET'])
+def getAllFiles():
+    q = Query.from_(
+        db.tables["File"]
+    ).select("id","path").orderby('id', order=Order.asc)
+    rows = executeQ(q, True)
+    result = {}
+    for row in rows:
+        result[row[0]] = row[1]
+    return jsonify(result)
 
 @app.route('/renameEntry/<id>', methods=['PUT'])
 def renameEntry(id):
