@@ -39,13 +39,13 @@ def trueAlgo(fileId):
             continue
 
         minD = 255
-
+        stringsRelevant.append("_empty_")
+        result.append("unique")
         for k, v in metaphones.items():
             if k == fileId:
                 continue
             counter = 0
-            stringsRelevant.append("_empty_")
-            result.append("unique")
+
             for val2 in v:
                 if val2 == "":
                     counter += 1
@@ -70,7 +70,7 @@ def trueAlgo(fileId):
                 counter += 1
         distances.append(minD)
         counterF += 1
-
+    
     for i in range(len(stringsFile)):
         print(
             stringsFile[i], " ||| ", stringsRelevant[i], " ||| ", distances[i],
