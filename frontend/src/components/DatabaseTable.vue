@@ -73,7 +73,6 @@ export default {
 
       fields: [
         {key: 'filename', label: 'Filename', sortable: true, sortDirection: 'desc'},
-        {key: 'lines', label: 'Lines of code', sortable: true, class: 'text-center'},
         {key: 'date', label: 'Date of download', sortable: true, class: 'text-center', formatter: "formatDateAssigned", sortDirection: 'desc'},
         {key: 'actions', label: 'Actions', class: 'text-center'}
       ],
@@ -140,7 +139,8 @@ export default {
           })
           .then(() => {
             console.log('SUCCESS!!');
-            this.refresh;
+            this.items = [];
+            this.getFiles();
           })
           .catch(() => {
             console.log('FAILURE!!');
@@ -154,7 +154,8 @@ export default {
             for (let key in res.data) {
                 let item = {};
                 item['id'] = key;
-                item['filename'] = res.data[key].replace(/^.*[\\//]/, '');
+                item['filename'] = res.data[key][0].replace(/^.*[\\//]/, '');
+                item['date'] = res.data[key][1];
                 this.items.push(item);
             }
           });
@@ -167,6 +168,7 @@ export default {
 
   created() {
     this.getFiles();
+    this.totalRows = this.items.length
   }
 
 }

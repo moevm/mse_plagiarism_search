@@ -6,8 +6,8 @@
       <div class="col-8">
         <b-tabs content-class="mt-3">
           <b-tab title="File" active>
-            <b-alert show variant="info"> supported formats: *.zip, *.rar, non-binary files.</b-alert>
-
+            <!-- <b-alert show variant="info"> supported formats: *.zip, *.rar, non-binary files.</b-alert> -->
+            <b-alert variant="info"> supported formats: *.js, *.java, *.cpp, *.c, non-binary files.</b-alert>
             <b-form-file
                 v-model="file1"
                 :state="Boolean(file1)"
@@ -31,53 +31,48 @@
       </div>
       <!--      Right sub-menu -->
       <div class="col-4">
-        <b-form-group label="Search settings:">
-          <b-form-checkbox
-              v-for="option in searchOptions"
-              v-model="selected"
-              :key="option.value"
-              :value="option.value"
-              name="flavour-3a"
+        <label> Search settings: </label>
+          <b-form-checkbox-group
+              v-model="selectedSearchOptions"
+              :options="searchOptions"
+              class="mb-3"
+              value-field="value"
+              text-field="text"
+              disabled-field="notEnabled"
           >
-            {{ option.text }}
-          </b-form-checkbox>
-        </b-form-group>
+          </b-form-checkbox-group>
 
-        <b-form-group label="Methods of search:">
-          <b-form-checkbox
-              v-for="option in methodsOptions"
-              v-model="selected"
-              :key="option.value"
-              :value="option.value"
-              name="flavour-3a"
+        <label> Methods of search:</label>
+          <b-form-checkbox-group
+              v-model="selectedMethodsOptions"
+              :options="methodsOptions"
+              class="mb-3"
+              value-field="value"
+              text-field="text"
+              disabled-field="notEnabled"
           >
-            {{ option.text }}
-          </b-form-checkbox>
-        </b-form-group>
+          </b-form-checkbox-group>
 
-        <b-form-group label="Open source:">
-          <b-form-checkbox
-              v-for="option in openSourceOptions"
-              v-model="selected"
-              :key="option.value"
-              :value="option.value"
-              name="flavour-3a"
-          >
-            {{ option.text }}
-          </b-form-checkbox>
-        </b-form-group>
+        <label> Open source:</label>
+        <b-form-checkbox-group
+            v-model="selectedOpenSourceOptions"
+            :options="openSourceOptions"
+            class="mb-3"
+            value-field="value"
+            text-field="text"
+            disabled-field="notEnabled"
+        >
+        </b-form-checkbox-group>
+
         <!--        Footer content -->
         <b-button variant="primary" v-on:click="submit()">Start searching</b-button>
       </div>
-    </div>
-    <div>
-      <div class="mt-3">Config selected : {{ file1 ? file1.name : '' }}, {{ selected }}</div>
     </div>
   </div>
 </template>
 
 <script>
-import axios from "axios";
+import router from "@/router";
 
 export default {
   name: "Search",
@@ -85,41 +80,54 @@ export default {
     return {
       file1: null,
       file2: null,
-      selected: [],
+
+      selectedSearchOptions: [],
+      selectedMethodsOptions: [],
+      selectedOpenSourceOptions: [],
 
       searchOptions: [
         {text: 'Database search', value: 'database'},
-        {text: 'Open source search', value: 'opensource'},
+        {text: 'Open source search', value: 'opensource', notEnabled: true},
       ],
       methodsOptions: [
         {text: 'Levenshtein distance', value: 'levenshtein'},
-        {text: 'PlagCheck', value: 'plagcheck'},
+        {text: 'PlagCheck', value: 'plagcheck', notEnabled: true},
       ],
       openSourceOptions: [
-        {text: 'BitBucket', value: 'bitbucket'},
-        {text: 'StackOverflow', value: 'stackoverflow'},
-        {text: 'GitHub', value: 'github'},
+        {text: 'StackOverflow', value: 'stackoverflow', notEnabled: true},
+        {text: 'GitHub', value: 'github', notEnabled: true},
       ]
     }
   },
   methods: {
+    /*
+    #TODO
+      - нормальная обработка чекбокса;
+    */
     submit() {
-      let formData = new FormData();
-      formData.append('file', this.file1);
-      axios.post('http://127.0.0.1:5000/loadAndCheckFile',
-          formData,
-          {
-            headers: {
-              'Content-Type': 'multipart/form-data; charset=utf-8'
-            }
+        if (this.selectedSearchOptions.length && this.selectedMethodsOptions.length && this.file1) {
+          let formData = new FormData();
+          formData.append('file', this.file1);
+
+          const intervalID = setInterval(() => {
+            console.log('загрузка')
+          }, 200);
+
+          this.$store.dispatch('SET_RESULT', formData).then(() => {
+            clearInterval(intervalID);
+            console.log('...загрузка завершена');
+            router.push('./search/result');
           })
-          .then((res) => {
-            console.log('SUCCESS!!');
-            console.log(res.data);
-          })
-          .catch(() => {
-            console.log('FAILURE!!');
-          });
+        }
+    },
+
+    },
+
+  watch: {
+    $route(to, from) {
+      const toDepth = to.path.split('/').length
+      const fromDepth = from.path.split('/').length
+      this.transitionName = toDepth < fromDepth ? 'slide-right' : 'slide-left'
     }
   }
 }

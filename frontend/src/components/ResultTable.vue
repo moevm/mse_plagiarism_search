@@ -68,10 +68,7 @@ export default {
   data() {
     return {
       items: [
-        {filename: 'main.cpp', percent: 95.06, lines: 258, type: 'file'},
-        {filename: 'Game.cpp', percent: 68.77, lines: 300, type: 'file'},
-        {filename: 'Game.hpp', percent: 35.95, lines: 160, type: 'file'},
-        {filename: 'src', percent: 75.05, lines: 900, type: 'directory'},
+       // {filename: 'main.cpp', percent: 95.06, lines: 258, type: 'file'},
       ],
 
       fields: [
@@ -92,9 +89,9 @@ export default {
       filterOn: [],
     }
   },
+
   computed: {
     sortOptions() {
-      // Create an options list from our fields
       return this.fields
           .filter(f => f.sortable)
           .map(f => {
@@ -107,19 +104,32 @@ export default {
     file: String
   },
 
-  mounted() {
-    // Set the initial number of items
-    this.totalRows = this.items.length
-  },
   methods: {
     onFiltered(filteredItems) {
-      // Trigger pagination to update the number of buttons/pages due to filtering
       this.totalRows = filteredItems.length
       this.currentPage = 1
     },
+
     fullName(value) {
       return `${value.filename};`
+    },
+
+    getFiles() {
+      let data = this.$store.getters.RESULT;
+      console.log(data);
+      let item = {};
+      item['filename'] = 'tmp';
+      item['percent'] = 100 - data[4];
+      item['lines'] = data[0].length;
+      item['type'] = 'file';
+      this.items.push(item);
+      // {filename: 'main.cpp', percent: 95.06, lines: 258, type: 'file'},
     }
-  }
+  },
+
+  mounted() {
+    this.totalRows = this.items.length
+    this.getFiles();
+  },
 }
 </script>
