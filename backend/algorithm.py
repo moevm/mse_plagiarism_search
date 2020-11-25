@@ -2,7 +2,7 @@ from dbOperations import con, db, app, config, ALLOWED_EXTENSIONS, ALLOWED_ARCHI
 from pypika import Query, Table, Field, Schema, CustomFunction, Order, functions
 from flask import request, jsonify
 import os
-
+import time
 
 def getAllMetaphones():
     metaphones = {}
@@ -19,18 +19,20 @@ def getAllMetaphones():
 
 @app.route('/checkFile/<fileId>', methods=['GET'])
 def trueAlgo(fileId):
-
+    allTime = time.time()
     fileId = int(fileId)
+    
     metaphones, texts = getAllMetaphones()
+    
     fileMetaphones = metaphones[fileId]
     distances = []
     stringsFile = []
     stringsRelevant = []
     result = []
     counterF = 0
-
+    start_time = time.time()
     for val in fileMetaphones:
-
+        
         stringsFile.append(texts[fileId][counterF])
         if val == "":
             counterF += 1
@@ -42,6 +44,7 @@ def trueAlgo(fileId):
         minD = 255
         stringsRelevant.append("_empty_")
         result.append("unique")
+        
         for k, v in metaphones.items():
             if k == fileId:
                 continue
@@ -51,10 +54,17 @@ def trueAlgo(fileId):
                 if val2 == "":
                     counter += 1
                     continue
-                maxD = min(len(val), len(val2)) // 2 + 2
+                if abs(len(val2) - len(val)) > 3:
+                    counter += 1
+                    continue
+                if len(val) > 1 and len(val2)>1 and ((val2[0] != val[0]) or (val2[1] != val[1])):
+                    counter += 1
+                    continue
+                maxD = min(len(val), len(val2), 7) // 2 + 2
+                
                 q = Query.select(
                     db.func["levenshtein_less_equal"](
-                        str(val), val2, min(len(val), len(val2)) // 2 + 1
+                        str(val), val2, min(len(val), len(val2), 7) // 2 + 1
                     )
                 )
                 rows = executeQ(q, True)
@@ -69,8 +79,13 @@ def trueAlgo(fileId):
                                 result[len(result) - 1] = "similar"
                         minD = min(minD, row[0])
                 counter += 1
+                if minD == 0 or minD == 1:
+                    break
+            if minD == 0 or minD == 1:
+                    break
         distances.append(minD)
         counterF += 1
+    print("--- %s seconds ---" % (time.time() - start_time))    
     coincidences = 0
     for i in range(len(stringsFile)):
         print(
@@ -85,6 +100,7 @@ def trueAlgo(fileId):
         
     print("RESULT: ", round(coincidences/len(stringsFile), 1)*100)
     fullResult = [stringsFile, stringsRelevant, distances, result, round(coincidences/len(stringsFile), 1)*100]
+    print("--- %s seconds ---" % (time.time() - allTime))    
     return jsonify(fullResult)
 
 
