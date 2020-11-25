@@ -7,12 +7,14 @@
         <b-tabs content-class="mt-3">
           <b-tab title="File" active>
             <b-alert show variant="info"> supported formats: *.zip, *.rar, non-binary files.</b-alert>
+
             <b-form-file
                 v-model="file1"
                 :state="Boolean(file1)"
                 placeholder="Choose a file or drop it here..."
                 drop-placeholder="Drop file here..."
             ></b-form-file>
+
           </b-tab>
           <b-tab title="Git">
 
@@ -65,7 +67,7 @@
           </b-form-checkbox>
         </b-form-group>
         <!--        Footer content -->
-        <router-link to="/search/result" tag="b-button">Start searching</router-link>
+        <b-button variant="primary" v-on:click="submit()">Start searching</b-button>
       </div>
     </div>
     <div>
@@ -75,6 +77,8 @@
 </template>
 
 <script>
+import axios from "axios";
+
 export default {
   name: "Search",
   data() {
@@ -96,6 +100,26 @@ export default {
         {text: 'StackOverflow', value: 'stackoverflow'},
         {text: 'GitHub', value: 'github'},
       ]
+    }
+  },
+  methods: {
+    submit() {
+      let formData = new FormData();
+      formData.append('file', this.file1);
+      axios.post('http://127.0.0.1:5000/loadAndCheckFile',
+          formData,
+          {
+            headers: {
+              'Content-Type': 'multipart/form-data; charset=utf-8'
+            }
+          })
+          .then((res) => {
+            console.log('SUCCESS!!');
+            console.log(res.data);
+          })
+          .catch(() => {
+            console.log('FAILURE!!');
+          });
     }
   }
 }
