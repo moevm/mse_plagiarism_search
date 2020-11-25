@@ -57,6 +57,9 @@ ALTER TABLE public."CodeFragment"
 """
 
 createSequences = """
+CREATE EXTENSION IF NOT EXISTS fuzzystrmatch
+    SCHEMA public
+    VERSION "1.1";
 CREATE SEQUENCE IF NOT EXISTS public."Entry_id_seq";
 CREATE SEQUENCE IF NOT EXISTS public."File_id_seq";
 CREATE SEQUENCE IF NOT EXISTS public."CodeFragment_id_seq";
