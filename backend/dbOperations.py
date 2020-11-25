@@ -233,11 +233,13 @@ def getFile(id):
 @app.route('/getAllFiles', methods=['GET'])
 def getAllFiles():
     q = Query.from_(db.tables["File"]
-                   ).select("id", "path").orderby('id', order=Order.asc)
+                   ).select("id", "path", "entryId").orderby('id', order=Order.asc)
     rows = executeQ(q, True)
     result = {}
     for row in rows:
-        result[row[0]] = row[1]
+        q = Query.from_(db.tables["Entry"]).select("createdAt")
+        dates = executeQ(q, True)
+        result[row[0]] = [row[1], dates[0][0]]
     return jsonify(result)
 
 
