@@ -3,7 +3,7 @@ CREATE TABLE IF NOT EXISTS public."Entry"
 (
     id integer NOT NULL DEFAULT nextval('"Entry_id_seq"'::regclass),
     name text COLLATE pg_catalog."default",
-    "createdAt" date,
+    "createdAt" timestamp with time zone,
     CONSTRAINT "Entry_pkey" PRIMARY KEY (id)
 )
 
