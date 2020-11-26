@@ -85,22 +85,22 @@ def trueAlgo(fileId):
                     break
         distances.append(minD)
         counterF += 1
-    print("--- %s seconds ---" % (time.time() - start_time))    
+     
     coincidences = 0
     for i in range(len(stringsFile)):
-        print(
-            stringsFile[i], " ||| ", stringsRelevant[i], " ||| ", distances[i],
-            result[i]
-        )
+        #print(
+        #    stringsFile[i], " ||| ", stringsRelevant[i], " ||| ", distances[i],
+        #    result[i]
+        #)
         if result[i] == "plagiarism":
             coincidences += 1
         elif result[i] == "similar":
             coincidences += 0.3
  
-        
-    print("RESULT: ", round(coincidences/len(stringsFile), 1)*100)
-    fullResult = [stringsFile, stringsRelevant, distances, result, round(coincidences/len(stringsFile), 1)*100]
-    print("--- %s seconds ---" % (time.time() - allTime))    
+
+    print("RESULT: ", round(coincidences/len(stringsFile)*100, 1))
+    fullResult = [stringsFile, stringsRelevant, distances, result, round(coincidences/len(stringsFile)*100, 1)]
+    print("--- %s seconds ---" % (time.time() - start_time))     
     return jsonify(fullResult)
 
 
