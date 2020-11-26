@@ -10,21 +10,32 @@ from app import con, db, app, config, ALLOWED_EXTENSIONS, ALLOWED_ARCHIVES
 import zipfile
 import tempfile
 import sqlQueries
+import contextlib
+import shutil
+
+
+@contextlib.contextmanager
+def temporary_directory(*args, **kwargs):
+    d = tempfile.mkdtemp(*args, **kwargs)
+    try:
+        yield d
+    finally:
+        shutil.rmtree(d, ignore_errors=True)
 
 
 def allowed_file(filename):
     return '.' in filename and \
-           filename.rsplit('.', 1)[1] in ALLOWED_EXTENSIONS
+            filename.rsplit('.', 1)[1] in ALLOWED_EXTENSIONS
 
 
 def allowed_archive(filename):
     return '.' in filename and \
-              filename.rsplit('.', 1)[1] in ALLOWED_ARCHIVES
+                filename.rsplit('.', 1)[1] in ALLOWED_ARCHIVES
 
 
 def allowed_file_custom(filename, allowedExtensions):
     return '.' in filename and \
-              filename.rsplit('.', 1)[1] in allowedExtensions
+                filename.rsplit('.', 1)[1] in allowedExtensions
 
 
 #Загрузка файлов в БД. Работает!
@@ -38,7 +49,8 @@ def upload_file():
             filename = secure_filename(file.filename)
             file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
             if ".zip" in filename:
-                with tempfile.TemporaryDirectory() as tmp:
+                #with tempfile.TemporaryDirectory() as tmp: #какого-то хера темпфайл не может почистить директорию за собой, хотя раньше все чистилось нормально. Винда говорит, что папка используется. Ошибки.
+                with temporary_directory() as tmp:  #игнорируем ошибки.
                     tmp_dir_name = tmp
                     path = os.path.join(os.getcwd(), tmp_dir_name)
                     with zipfile.ZipFile(
@@ -51,7 +63,11 @@ def upload_file():
                 addOneFile(
                     app.config['UPLOAD_FOLDER'], filename
                 )  #TODO: Удалить файл после всех операций?
-                return redirect(url_for('uploaded_file', filename=filename))
+                return jsonify(
+                    {"ok": "ok"}
+                )  #redirect(url_for('uploaded_file', filename=filename))
+        else:
+            return jsonify({"error": "failed"})
 
 
 # return '''
@@ -70,8 +86,29 @@ def uploaded_file(filename):
     return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
 
 
+def shorterString(string):
+    result = []
+    if len(string) <= 255:
+        result.append(string)
+        return result
+
+    for i in range(0, (len(string) // 253) + 1):
+        if i > 0:
+            result.append(
+                str.encode("~~", encoding="utf-8") +
+                string[0 + (i * 253):min(253 * (i + 1), len(string))]
+            )
+        else:
+            result.append(
+                string[0 + (i * 255):min(255 * (i + 1), len(string))]
+            )
+    for v in result:
+        print(len(v))
+    return result
+
+
 #TODO: Осмысленное entryName
-#	   Хранить не весь путь для файла, а только от папки загрузок
+#       Хранить не весь путь для файла, а только от папки загрузок
 def addOneFile(dir, fileName, entryName="", id=0):
 
     cwd = os.getcwd()
@@ -86,10 +123,20 @@ def addOneFile(dir, fileName, entryName="", id=0):
     with open(os.path.join(dir, fileName), encoding='utf-8') as f:
         code = f.read()
 
-    code = code.replace("\n", "")
+    #code = code.replace("\n", "")
     code = code.replace("\t", "")
 
     codeInBytes = str.encode(code, encoding='utf-8')
+    hash_object = hashlib.sha256(codeInBytes)
+
+    q = Query.from_(
+        db.tables["File"]
+    ).select("id").where(db.tables["File"].hash == hash_object.hexdigest())
+    checkDuplicate = executeQ(q, True)
+    if checkDuplicate:
+        print("Дубликат!", checkDuplicate[0][0])
+        return (0, checkDuplicate[0][0])
+
     if id == 0:
         q = Query.into(
             db.tables["Entry"]
@@ -99,8 +146,6 @@ def addOneFile(dir, fileName, entryName="", id=0):
         q = Query.from_(db.tables["Entry"]
                        ).select('id').orderby('id', order=Order.desc).limit(1)
         id = getId(executeQ(q, True))
-
-    hash_object = hashlib.sha256(codeInBytes)
 
     fileId = 0
     q = Query.into(db.tables["File"]).columns("entryId", "path",
@@ -114,24 +159,31 @@ def addOneFile(dir, fileName, entryName="", id=0):
                    ).select('id').orderby('id', order=Order.desc).limit(1)
     fileId = getId(executeQ(q, True))
 
-    for i in range(0, (len(codeInBytes) // 255) + 1):
-        splittedCode.append(
-            bytes.decode(
-                codeInBytes[0 + (i * 255):min(255 *
-                                              (i + 1), len(codeInBytes))],
-                encoding='utf-8'
-            )
-        )
+    code = code.split("\n")
+    #shift = 0
+    for string in code:
+        stringInBytes = str.encode(string, encoding='utf-8')
+        strings = shorterString(stringInBytes)
+        for val in strings:
+            splittedCode.append(bytes.decode(val, encoding='utf-8'))
+    i = 0
+    for val in splittedCode:
         q = Query.into(db.tables["CodeFragment"]
                       ).columns("fileId", "order", "text", "metaphone").insert(
                           fileId, i, splittedCode[i],
                           db.func["metaphone"](splittedCode[i], 255)
                       )
         executeQ(q)
+        i += 1
+
+    #for i in range(0, (len(codeInBytes)//255)+1):
+    #    splittedCode.append(bytes.decode(codeInBytes[0+(i*255):min(255*(i+1), len(codeInBytes))], encoding='utf-8'))
+    #    q = Query.into(db.tables["CodeFragment"]).columns("fileId", "order", "text", "metaphone").insert(fileId, i, splittedCode[i], db.func["metaphone"](splittedCode[i], 255))
+    #    executeQ(q)
 
     os.chdir(cwd)
 
-    return id
+    return (id, fileId)
 
 
 def addManyFiles(dir, entryName, extensions=ALLOWED_EXTENSIONS):
@@ -146,7 +198,8 @@ def addManyFiles(dir, entryName, extensions=ALLOWED_EXTENSIONS):
             if allowed_file_custom(filename, extensions):
                 #print("Файл:", os.path.join(dirpath, filename))
                 if id == 0:
-                    id = addOneFile(dirpath, filename, entryName)
+                    id = addOneFile(dirpath, filename, entryName)[0]
+                    print(id)
                 else:
                     addOneFile(dirpath, filename, entryName, id)
 
@@ -168,8 +221,26 @@ def getFile(id):
     rows = executeQ(q, True)
     text = ""
     for row in rows:
-        text += row[0]
+        if text == "":
+            text += row[0]
+        elif row[0][0] == "~" and row[0][1] == "~":
+            text += row[0][2:len(row)]
+        else:
+            text += "\n" + row[0]
     return jsonify({"file": text})
+
+
+@app.route('/getAllFiles', methods=['GET'])
+def getAllFiles():
+    q = Query.from_(db.tables["File"]
+                   ).select("id", "path", "entryId").orderby('id', order=Order.asc)
+    rows = executeQ(q, True)
+    result = {}
+    for row in rows:
+        q = Query.from_(db.tables["Entry"]).select("createdAt")
+        dates = executeQ(q, True)
+        result[row[0]] = [row[1], dates[0][0]]
+    return jsonify(result)
 
 
 @app.route('/renameEntry/<id>', methods=['PUT'])
@@ -218,3 +289,6 @@ def dropAllTables():
         with con.cursor() as cur:
             cur.execute(sqlQueries.dropTables)
     print("ALL TABLES WERE DELETED")
+
+
+#dropAllTables()
