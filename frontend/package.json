@@ -18,8 +18,6 @@
     "popper.js": "^1.16.1",
     "vue": "^2.6.11",
     "vue-loading-overlay": "^3.4.2",
-    "vue-prism": "^1.0.5",
-    "vue-prism-component": "^1.2.0",
     "vue-router": "^3.4.5",
     "vuex": "^3.5.1"
   },
@@ -27,6 +25,7 @@
     "@vue/cli-plugin-babel": "~4.5.0",
     "@vue/cli-plugin-eslint": "~4.5.0",
     "@vue/cli-service": "~4.5.0",
+    "axios": "^0.21.0",
     "babel-eslint": "^10.1.0",
     "eslint": "^6.7.2",
     "eslint-plugin-vue": "^6.2.2",

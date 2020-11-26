@@ -67,9 +67,7 @@
 export default {
   data() {
     return {
-      items: [
-       // {filename: 'main.cpp', percent: 95.06, lines: 258, type: 'file'},
-      ],
+      items: [],
 
       fields: [
         {key: 'filename', label: 'Filename', sortable: true, sortDirection: 'desc'},
@@ -115,15 +113,11 @@ export default {
     },
 
     getFiles() {
-      let data = this.$store.getters.RESULT;
-      console.log(data);
-      let item = {};
-      item['filename'] = this.$store.getters.FILE_NAME;
-      item['percent'] = 100 - data[4];
-      item['lines'] = data[0].length;
-      item['type'] = 'file';
-      this.items.push(item);
-      // {filename: 'main.cpp', percent: 95.06, lines: 258, type: 'file'},
+      this.items.push({
+        'filename' : this.$store.getters.FILE_NAME,
+        'percent' : 100 - this.$store.getters.RESULT[4],
+        'lines' : this.$store.getters.RESULT[0].length,
+      });
     }
   },
 

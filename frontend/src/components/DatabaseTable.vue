@@ -62,14 +62,19 @@
 </template>
 
 <script>
+/*
+  #TODO
+    1) пагинация
+    2) удаление из папки ../backend/uploads
+    3) загрузка сразу нескольких файлов
+*/
+
 import axios from 'axios'
 
 export default {
   data() {
     return {
-      items: [
-        //{lines: 40, filename: 'my_database.sql', date: "02.03.04"},
-      ],
+      items: [],
 
       fields: [
         {key: 'filename', label: 'Filename', sortable: true, sortDirection: 'desc'},
@@ -100,12 +105,7 @@ export default {
           })
     }
   },
-  /*
-    #TODO
-      1) пагинация
-      2) удаление из папки ../backend/uploads
-      3) загрузка сразу нескольких файлов
-  */
+
   methods: {
     dateCompare(itemA, itemB, key) {
       if (key === 'date') {
@@ -138,26 +138,22 @@ export default {
             }
           })
           .then(() => {
-            console.log('SUCCESS!!');
             this.items = [];
             this.getFiles();
           })
           .catch(() => {
-            console.log('FAILURE!!');
           });
     },
 
     getFiles() {
-      axios.get("http://127.0.0.1:5000//getAllFiles"
-      )
+      axios.get("http://127.0.0.1:5000//getAllFiles")
           .then(res => {
-            for (let key in res.data) {
-                let item = {};
-                item['id'] = key;
-                item['filename'] = res.data[key][0].replace(/^.*[\\//]/, '');
-                item['date'] = res.data[key][1];
-                this.items.push(item);
-            }
+            for (let key in res.data)
+                this.items.push({
+                      'id' : key,
+                      'filename' : res.data[key][0].replace(/^.*[\\//]/, ''),
+                      'date' : res.data[key][1]
+                    });
           });
     }
   },
@@ -170,6 +166,5 @@ export default {
     this.getFiles();
     this.totalRows = this.items.length
   }
-
 }
 </script>

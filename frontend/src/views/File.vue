@@ -1,4 +1,6 @@
 <template>
+  <div>
+    <p class="h4 mb-2">{{ this.$store.getters.FILE_NAME }}</p>
     <b-list-group id="v-for-object" class="demo">
       <b-list-group-item style="padding: 2px; height: 24px; border: 0"
           v-for="item in text"
@@ -11,6 +13,7 @@
         </div>
       </b-list-group-item>
     </b-list-group>
+  </div>
 </template>
 
 <script>
