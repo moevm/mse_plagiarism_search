@@ -1,5 +1,9 @@
 <template>
   <div class="main-content">
+    <loading :active.sync="isLoading"
+             :is-full-page="fullPage"
+    >
+    </loading>
     <p class="h4 mb-2">Plagiarism search</p>
     <div class="row">
       <!--      Left sub-menu -->
@@ -73,6 +77,8 @@
 
 <script>
 import router from "@/router";
+import Loading from 'vue-loading-overlay';
+import 'vue-loading-overlay/dist/vue-loading.css';
 
 export default {
   name: "Search",
@@ -80,6 +86,9 @@ export default {
     return {
       file1: null,
       file2: null,
+
+      isLoading: false,
+      fullPage: true,
 
       selectedSearchOptions: [],
       selectedMethodsOptions: [],
@@ -110,16 +119,21 @@ export default {
           formData.append('file', this.file1);
 
           const intervalID = setInterval(() => {
-            console.log('загрузка')
+            console.log('загрузка');
+            this.isLoading = true;
           }, 200);
 
-          this.$store.dispatch('SET_RESULT', formData).then(() => {
-            clearInterval(intervalID);
-            console.log('...загрузка завершена');
-            router.push('./search/result');
-          })
+
+          this.$store.dispatch('SET_RESULT', formData)
+              .then(() => {
+                this.$store.dispatch('SET_FILENAME', this.file1.name)
+                clearInterval(intervalID);
+                console.log('...загрузка завершена');
+                this.isLoading = false;
+                router.push('./search/result');
+          });
         }
-    },
+      },
 
     },
 
@@ -129,10 +143,10 @@ export default {
       const fromDepth = from.path.split('/').length
       this.transitionName = toDepth < fromDepth ? 'slide-right' : 'slide-left'
     }
+  },
+
+  components: {
+    Loading
   }
 }
 </script>
-
-<style scoped>
-
-</style>

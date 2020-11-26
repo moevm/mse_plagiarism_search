@@ -118,7 +118,7 @@ export default {
       let data = this.$store.getters.RESULT;
       console.log(data);
       let item = {};
-      item['filename'] = 'tmp';
+      item['filename'] = this.$store.getters.FILE_NAME;
       item['percent'] = 100 - data[4];
       item['lines'] = data[0].length;
       item['type'] = 'file';
