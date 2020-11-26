@@ -87,6 +87,7 @@ def trueAlgo(fileId):
         counterF += 1
      
     coincidences = 0
+    empty = 0
     for i in range(len(stringsFile)):
         #print(
         #    stringsFile[i], " ||| ", stringsRelevant[i], " ||| ", distances[i],
@@ -96,10 +97,12 @@ def trueAlgo(fileId):
             coincidences += 1
         elif result[i] == "similar":
             coincidences += 0.3
+        elif result[i] == "skipped":
+            empty += 1
  
 
-    print("RESULT: ", round(coincidences/len(stringsFile)*100, 1))
-    fullResult = [stringsFile, stringsRelevant, distances, result, round(coincidences/len(stringsFile)*100, 1)]
+    print("RESULT: ", round(coincidences/(len(stringsFile)-empty)*100, 1))
+    fullResult = [stringsFile, stringsRelevant, distances, result, round(coincidences/(len(stringsFile)-empty)*100, 1)]
     print("--- %s seconds ---" % (time.time() - start_time))     
     return jsonify(fullResult)
 
