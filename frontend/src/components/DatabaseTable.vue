@@ -7,6 +7,7 @@
                  placeholder="Choose a file or drop it here..."
                  drop-placeholder="Drop file here..."
     ></b-form-file>
+    <b-button variant="primary" v-on:click="submitFile()"> Upload </b-button>
 
     <!-- Main table element -->
     <b-table
@@ -61,38 +62,23 @@
 </template>
 
 <script>
+/*
+  #TODO
+    1) пагинация
+    2) удаление из папки ../backend/uploads
+    3) загрузка сразу нескольких файлов
+*/
+
+import axios from 'axios'
+
 export default {
   data() {
     return {
-      items: [
-        {lines: 40, filename: 'my_database.sql', date: "02.03.04"},
-        {lines: 41, filename: 'my_database2.sql', date: "03.03.04"},
-        {lines: 42, filename: 'my_database3.sql', date: "04.03.14"},
-        {lines: 43, filename: 'my_database4.sql', date: "05.03.05"},
-        {lines: 44, filename: 'my_database5.sql', date: "06.03.15"},
-        {lines: 40, filename: 'my_database.sql', date: "02.03.04"},
-        {lines: 41, filename: 'my_database2.sql', date: "03.03.04"},
-        {lines: 42, filename: 'my_database3.sql', date: "04.03.14"},
-        {lines: 43, filename: 'my_database4.sql', date: "05.03.05"},
-        {lines: 44, filename: 'my_database5.sql', date: "06.03.15"},
-        {lines: 40, filename: 'my_database.sql', date: "02.03.04"},
-        {lines: 41, filename: 'my_database2.sql', date: "03.03.04"},
-        {lines: 42, filename: 'my_database3.sql', date: "04.03.14"},
-        {lines: 43, filename: 'my_database4.sql', date: "05.03.05"},
-        {lines: 44, filename: 'my_database5.sql', date: "06.03.15"},
-      ],
+      items: [],
 
       fields: [
         {key: 'filename', label: 'Filename', sortable: true, sortDirection: 'desc'},
-        {key: 'lines', label: 'Lines of code', sortable: true, class: 'text-center'},
-        {
-          key: 'date',
-          label: 'Date of download',
-          sortable: true,
-          class: 'text-center',
-          formatter: "formatDateAssigned",
-          sortDirection: 'desc'
-        },
+        {key: 'date', label: 'Date of download', sortable: true, class: 'text-center', formatter: "formatDateAssigned", sortDirection: 'desc'},
         {key: 'actions', label: 'Actions', class: 'text-center'}
       ],
 
@@ -112,7 +98,6 @@ export default {
 
   computed: {
     sortOptions() {
-      // Create an options list from our fields
       return this.fields
           .filter(f => f.sortable)
           .map(f => {
@@ -133,20 +118,53 @@ export default {
     },
 
     deleteItem(index) {
+      axios.delete(`http://127.0.0.1:5000/deleteEntry/${this.items[index].id}`);
       this.items.splice(index, 1);
     },
 
     onFiltered(filteredItems) {
-      // Trigger pagination to update the number of buttons/pages due to filtering
       this.totalRows = filteredItems.length
       this.currentPage = 1
+    },
+
+    submitFile() {
+      let formData = new FormData();
+      formData.append('file', this.file1);
+      axios.post( 'http://127.0.0.1:5000/upload',
+          formData,
+          {
+            headers: {
+              'Content-Type': 'multipart/form-data; charset=utf-8'
+            }
+          })
+          .then(() => {
+            this.items = [];
+            this.getFiles();
+          })
+          .catch(() => {
+          });
+    },
+
+    getFiles() {
+      axios.get("http://127.0.0.1:5000//getAllFiles")
+          .then(res => {
+            for (let key in res.data)
+                this.items.push({
+                      'id' : key,
+                      'filename' : res.data[key][0].replace(/^.*[\\//]/, ''),
+                      'date' : res.data[key][1]
+                    });
+          });
     }
   },
 
   mounted() {
-    // Set the initial number of items
     this.totalRows = this.items.length
   },
 
+  created() {
+    this.getFiles();
+    this.totalRows = this.items.length
+  }
 }
 </script>

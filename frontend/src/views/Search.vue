@@ -1,18 +1,24 @@
 <template>
   <div class="main-content">
+    <loading :active.sync="isLoading"
+             :is-full-page="fullPage"
+    >
+    </loading>
     <p class="h4 mb-2">Plagiarism search</p>
     <div class="row">
       <!--      Left sub-menu -->
       <div class="col-8">
         <b-tabs content-class="mt-3">
           <b-tab title="File" active>
-            <b-alert show variant="info"> supported formats: *.zip, *.rar, non-binary files.</b-alert>
+            <!-- <b-alert show variant="info"> supported formats: *.zip, *.rar, non-binary files.</b-alert> -->
+            <b-alert variant="info"> supported formats: *.js, *.java, *.cpp, *.c, non-binary files.</b-alert>
             <b-form-file
                 v-model="file1"
                 :state="Boolean(file1)"
                 placeholder="Choose a file or drop it here..."
                 drop-placeholder="Drop file here..."
             ></b-form-file>
+
           </b-tab>
           <b-tab title="Git">
 
@@ -29,78 +35,118 @@
       </div>
       <!--      Right sub-menu -->
       <div class="col-4">
-        <b-form-group label="Search settings:">
-          <b-form-checkbox
-              v-for="option in searchOptions"
-              v-model="selected"
-              :key="option.value"
-              :value="option.value"
-              name="flavour-3a"
+        <label> Search settings: </label>
+          <b-form-checkbox-group
+              v-model="selectedSearchOptions"
+              :options="searchOptions"
+              class="mb-3"
+              value-field="value"
+              text-field="text"
+              disabled-field="notEnabled"
           >
-            {{ option.text }}
-          </b-form-checkbox>
-        </b-form-group>
+          </b-form-checkbox-group>
 
-        <b-form-group label="Methods of search:">
-          <b-form-checkbox
-              v-for="option in methodsOptions"
-              v-model="selected"
-              :key="option.value"
-              :value="option.value"
-              name="flavour-3a"
+        <label> Methods of search:</label>
+          <b-form-checkbox-group
+              v-model="selectedMethodsOptions"
+              :options="methodsOptions"
+              class="mb-3"
+              value-field="value"
+              text-field="text"
+              disabled-field="notEnabled"
           >
-            {{ option.text }}
-          </b-form-checkbox>
-        </b-form-group>
+          </b-form-checkbox-group>
 
-        <b-form-group label="Open source:">
-          <b-form-checkbox
-              v-for="option in openSourceOptions"
-              v-model="selected"
-              :key="option.value"
-              :value="option.value"
-              name="flavour-3a"
-          >
-            {{ option.text }}
-          </b-form-checkbox>
-        </b-form-group>
+        <label> Open source:</label>
+        <b-form-checkbox-group
+            v-model="selectedOpenSourceOptions"
+            :options="openSourceOptions"
+            class="mb-3"
+            value-field="value"
+            text-field="text"
+            disabled-field="notEnabled"
+        >
+        </b-form-checkbox-group>
+
         <!--        Footer content -->
-        <router-link to="/search/result" tag="b-button">Start searching</router-link>
+        <b-button variant="primary" v-on:click="submit()">Start searching</b-button>
       </div>
-    </div>
-    <div>
-      <div class="mt-3">Config selected : {{ file1 ? file1.name : '' }}, {{ selected }}</div>
     </div>
   </div>
 </template>
 
 <script>
+import router from "@/router";
+import Loading from 'vue-loading-overlay';
+import 'vue-loading-overlay/dist/vue-loading.css';
+
 export default {
   name: "Search",
   data() {
     return {
       file1: null,
       file2: null,
-      selected: [],
+
+      isLoading: false,
+      fullPage: true,
+
+      selectedSearchOptions: [],
+      selectedMethodsOptions: [],
+      selectedOpenSourceOptions: [],
 
       searchOptions: [
         {text: 'Database search', value: 'database'},
-        {text: 'Open source search', value: 'opensource'},
+        {text: 'Open source search', value: 'opensource', notEnabled: true},
       ],
       methodsOptions: [
         {text: 'Levenshtein distance', value: 'levenshtein'},
-        {text: 'PlagCheck', value: 'plagcheck'},
+        {text: 'PlagCheck', value: 'plagcheck', notEnabled: true},
       ],
       openSourceOptions: [
-        {text: 'BitBucket', value: 'bitbucket'},
-        {text: 'StackOverflow', value: 'stackoverflow'},
-        {text: 'GitHub', value: 'github'},
+        {text: 'StackOverflow', value: 'stackoverflow', notEnabled: true},
+        {text: 'GitHub', value: 'github', notEnabled: true},
       ]
     }
+  },
+  methods: {
+    /*
+    #TODO
+      - нормальная обработка чекбокса;
+    */
+    submit() {
+        if (this.selectedSearchOptions.length && this.selectedMethodsOptions.length && this.file1) {
+          let formData = new FormData();
+          formData.append('file', this.file1);
+
+          const intervalID = setInterval(() => {
+            console.log('загрузка');
+            this.isLoading = true;
+          }, 200);
+
+
+          this.$store.dispatch('SET_RESULT', formData)
+              .then(() => {
+                this.$store.dispatch('SET_FILENAME', this.file1.name)
+                clearInterval(intervalID);
+                console.log('...загрузка завершена');
+                this.isLoading = false;
+                router.push('./search/result');
+          });
+        }
+      },
+
+    },
+
+  watch: {
+    $route(to, from) {
+      const toDepth = to.path.split('/').length
+      const fromDepth = from.path.split('/').length
+      this.transitionName = toDepth < fromDepth ? 'slide-right' : 'slide-left'
+    }
+  },
+
+  components: {
+    Loading
   }
 }
 </script>
-
-<style scoped>
-
-</style>
