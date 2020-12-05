@@ -57,7 +57,6 @@ import algorithm
 
 
 import sys
-print(os.path.join(os.getcwd(), "..", "scripts"))
 sys.path.insert(0, os.path.join(os.getcwd(), "..", "scripts"))
 import load_repos_functions
 

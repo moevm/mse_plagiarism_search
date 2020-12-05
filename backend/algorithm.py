@@ -1,8 +1,10 @@
-from dbOperations import con, db, app, config, ALLOWED_EXTENSIONS, ALLOWED_ARCHIVES, executeQ, allowed_file, allowed_archive, secure_filename, addOneFile
+from dbOperations import con, db, app, config, ALLOWED_EXTENSIONS, ALLOWED_ARCHIVES, executeQ, allowed_file, allowed_archive, secure_filename, addOneFile, addManyFiles, temporary_directory
 from pypika import Query, Table, Field, Schema, CustomFunction, Order, functions
 from flask import request, jsonify
 import os
 import time
+import zipfile
+import tempfile
 
 def getAllMetaphones():
     metaphones = {}
@@ -18,7 +20,7 @@ def getAllMetaphones():
 
 
 @app.route('/checkFile/<fileId>', methods=['GET'])
-def trueAlgo(fileId):
+def trueAlgo(fileId, needList = False):
     allTime = time.time()
     fileId = int(fileId)
     
@@ -104,7 +106,10 @@ def trueAlgo(fileId):
     print("RESULT: ", round(coincidences/(len(stringsFile)-empty)*100, 1))
     fullResult = [stringsFile, stringsRelevant, distances, result, round(coincidences/(len(stringsFile)-empty)*100, 1)]
     print("--- %s seconds ---" % (time.time() - start_time))     
-    return jsonify(fullResult)
+    if needList:
+        return fullResult
+    else:
+        return jsonify(fullResult)
 
 
 @app.route('/loadAndCheckFile', methods=['POST'])
@@ -119,6 +124,24 @@ def loadAndCheckFile():
             fileId = addOneFile(app.config['UPLOAD_FOLDER'], filename)[1]
             #TODO: Удалить файл после всех операций?
             return trueAlgo(fileId)
+        elif file and (
+            allowed_archive(file.filename)
+        ):
+            filename = secure_filename(file.filename)
+            file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+            with temporary_directory() as tmp:  #игнорируем ошибки.
+                tmp_dir_name = tmp
+                path = os.path.join(os.getcwd(), tmp_dir_name)
+                with zipfile.ZipFile(
+                    os.path.join(app.config['UPLOAD_FOLDER'], filename)
+                ) as zf:
+                    zf.extractall(path)
+                    info = addManyFiles(path, filename)
+                    results = []
+                    for val in info:
+                        print(val)
+                        results.append(trueAlgo(val[1], True))
+                    return jsonify(results)
         else:
             return jsonify({"error": "failed"})
 

@@ -189,6 +189,7 @@ def addOneFile(dir, fileName, entryName="", id=0):
 def addManyFiles(dir, entryName, extensions=ALLOWED_EXTENSIONS):
 
     id = 0
+    results = []
     for dirpath, dirnames, filenames in os.walk(dir):
         # перебрать каталоги
         #for dirname in dirnames:
@@ -198,11 +199,14 @@ def addManyFiles(dir, entryName, extensions=ALLOWED_EXTENSIONS):
             if allowed_file_custom(filename, extensions):
                 #print("Файл:", os.path.join(dirpath, filename))
                 if id == 0:
-                    id = addOneFile(dirpath, filename, entryName)[0]
+                    returned = addOneFile(dirpath, filename, entryName)
+                    id = returned[0]
                     print(id)
+                    results.append(returned)
                 else:
-                    addOneFile(dirpath, filename, entryName, id)
-
+                    returned = addOneFile(dirpath, filename, entryName, id)
+                    results.append(returned)
+    return results
 
 @app.route('/getEntryFiles/<id>', methods=['GET'])
 def getEntryFiles(id):
