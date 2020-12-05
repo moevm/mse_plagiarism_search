@@ -5,7 +5,7 @@ import json
 import requests
 
 
-from dbOperations import con, db, app, config, ALLOWED_EXTENSIONS, ALLOWED_ARCHIVES
+from dbOperations import con, db, app, config, ALLOWED_EXTENSIONS, ALLOWED_ARCHIVES, addOneFile, addManyFiles, addManyFilesByList
 from flask import request, jsonify
 
 
@@ -19,19 +19,23 @@ def get_org_settings():
 
 def find_files(catalog):
     find_files = []
+    files_to_add = []
     for root, dirs, files in os.walk(catalog):
         find_files += [os.path.join(root, name) for name in files if not name.endswith(tuple(ALLOWED_EXTENSIONS))]
-    return find_files
+        files_to_add += [os.path.join(root, name) for name in files if name.endswith(tuple(ALLOWED_EXTENSIONS))]
+    print(files_to_add)
+    return (find_files, files_to_add)
 
 @app.route('/load_repo', methods=['GET'])
 def load_repo():
     url = request.form['url']
-    url = "https://github.com/Heliconter/floyd-warshall-visualizer"
     repo_full_name = url.replace("https://github.com/", "").replace(".git", "")
     if check_repo_exist(repo_full_name):
         subprocess.run(["git", "clone", url, os.path.join(app.config['UPLOAD_FOLDER'], repo_full_name)])
-        for path in find_files(os.path.join(app.config['UPLOAD_FOLDER'], repo_full_name)):
-            os.remove(path)
+        finded_files = find_files(os.path.join(app.config['UPLOAD_FOLDER'], repo_full_name))
+        #for path in finded_files[0]:
+            #os.remove(path) ##!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        addManyFilesByList(finded_files[1], repo_full_name)
         return jsonify({"ok":"ok"})
     else:
         # такого репозитория нет, сообщить об этом пользователю
@@ -43,9 +47,10 @@ def load_repo_from_org(repo_full_name, path):
     settings = get_org_settings()
     subprocess.run(["git", "clone", "https://" + settings['login'] + ":" + settings[
         'token'] + "@github.com/" + repo_full_name + ".git", os.path.normpath(path + '/' + repo_full_name)])
-
-    for path in find_files(os.path.normpath(path + '/' + repo_full_name)):
-        os.remove(path)
+    finded_files = find_files(os.path.normpath(path + '/' + repo_full_name))
+    #for path in finded_files[0]:
+        #os.remove(path) ##!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    addManyFilesByList(finded_files[1], repo_full_name)
 
 @app.route('/load_repos_from_org', methods=['GET'])
 def load_repos_from_org():

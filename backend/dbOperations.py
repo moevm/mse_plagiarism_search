@@ -208,6 +208,22 @@ def addManyFiles(dir, entryName, extensions=ALLOWED_EXTENSIONS):
                     results.append(returned)
     return results
 
+def addManyFilesByList(fileList, entryName, extensions=ALLOWED_EXTENSIONS):
+    id = 0
+    results = []
+    for filename in fileList:
+        if allowed_file_custom(filename, extensions):
+            splitted = os.path.split(filename)
+            if id == 0:
+                returned = addOneFile(splitted[0], splitted[1], entryName)
+                id = returned[0]
+                print(id)
+                results.append(returned)
+            else:
+                returned = addOneFile(splitted[0], splitted[1], entryName, id)
+                results.append(returned)
+
+
 @app.route('/getEntryFiles/<id>', methods=['GET'])
 def getEntryFiles(id):
     q = Query.from_(
