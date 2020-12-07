@@ -1,5 +1,7 @@
 # mse_plagiarism_search
 
+[![forthebadge](https://forthebadge.com/images/badges/works-on-my-machine.svg)](https://forthebadge.com)
+
 [Доска в Trello](https://trello.com/b/1opwXmzy)
 
 ## Инструкция по запуску
