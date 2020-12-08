@@ -30,6 +30,7 @@ class singleConnection:
             port=dbConfig["port"]
         )
         createTablesIfNotExists(self.con)
+        os.makedirs(config['app']['uploadFolder'], exist_ok=True)
     def __new__(self):
         if not hasattr(self, 'instance'):
             self.instance = super(singleConnection, self).__new__(self)
