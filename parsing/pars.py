@@ -61,10 +61,6 @@ for line in f:
                     cpp.write(str(soup.code.contents[0]) + '\n') 
             except Exception:
                 print('')
-    #if (line==''):
-    #    break
-#except Exception:
-#    print('FUUUUUUCK')
 
 print("Parse ", int(symbolsClanguage/65), " lines on C language")
 print("Parse ", int(symbolsJavalanguage/65), " lines on Java language")
