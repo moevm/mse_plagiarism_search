@@ -6,6 +6,7 @@
                  :state="Boolean(file1)"
                  placeholder="Choose a file or drop it here..."
                  drop-placeholder="Drop file here..."
+                 accept=".js, .c, .cpp, .java, .py, .h, .hpp"
     ></b-form-file>
     <b-button variant="primary" v-on:click="submitFile()"> Upload </b-button>
 
@@ -92,7 +93,6 @@ export default {
       filter: null,
       filterOn: [],
       file1: null,
-      file2: null,
     }
   },
 

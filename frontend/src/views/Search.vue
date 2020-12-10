@@ -1,7 +1,7 @@
 <template>
   <div class="main-content">
     <loading :active.sync="isLoading"
-             :is-full-page="fullPage"
+             :is-full-page="isFullPage"
     >
     </loading>
     <p class="h4 mb-2">Plagiarism search</p>
@@ -10,15 +10,20 @@
       <div class="col-8">
         <b-tabs content-class="mt-3">
           <b-tab title="File" active>
-            <!-- <b-alert show variant="info"> supported formats: *.zip, *.rar, non-binary files.</b-alert> -->
-            <b-alert variant="info"> supported formats: *.js, *.java, *.cpp, *.c, non-binary files.</b-alert>
+            <b-alert variant="info" show> supported formats: *.js, *.java, *.cpp, *.c, *.py, *.h, *.hpp non-binary files.</b-alert>
+            <p></p>
+
             <b-form-file
-                v-model="file1"
-                :state="Boolean(file1)"
+                v-model="file"
+                :state="Boolean(file)"
                 placeholder="Choose a file or drop it here..."
                 drop-placeholder="Drop file here..."
+                accept=".js, .c, .cpp, .java, .py, .h, .hpp"
             ></b-form-file>
-
+            <p></p>
+            <b-alert v-model="isEmptyFileInput" variant="danger" dismissible>
+              You must select a file
+            </b-alert>
           </b-tab>
           <b-tab title="Git">
 
@@ -67,9 +72,13 @@
             disabled-field="notEnabled"
         >
         </b-form-checkbox-group>
-
         <!--        Footer content -->
-        <b-button variant="primary" v-on:click="submit()">Start searching</b-button>
+        <b-alert v-model="isEmptyCheckboxes" variant="warning" id="danger" dismissible>
+          you must select the search method and the associated method!
+        </b-alert>
+        <b-button variant="primary" v-on:click="submit()">
+          Start searching
+        </b-button>
       </div>
     </div>
   </div>
@@ -84,11 +93,13 @@ export default {
   name: "Search",
   data() {
     return {
-      file1: null,
-      file2: null,
+      file: null,
 
       isLoading: false,
-      fullPage: true,
+      isFullPage: true,
+      isEmptyCheckboxes: false,
+      isEmptyFileInput: false,
+
 
       selectedSearchOptions: [],
       selectedMethodsOptions: [],
@@ -114,24 +125,29 @@ export default {
       - нормальная обработка чекбокса;
     */
     submit() {
-        if (this.selectedSearchOptions.length && this.selectedMethodsOptions.length && this.file1) {
+        if (this.selectedSearchOptions.length && this.selectedMethodsOptions.length && this.file) {
+          this.isEmptyCheckboxes = false;
+          this.isEmptyFileInput = false;
           let formData = new FormData();
-          formData.append('file', this.file1);
+          formData.append('file', this.file);
 
           const intervalID = setInterval(() => {
             console.log('загрузка');
             this.isLoading = true;
           }, 200);
 
-
           this.$store.dispatch('SET_RESULT', formData)
               .then(() => {
-                this.$store.dispatch('SET_FILENAME', this.file1.name)
+                this.$store.dispatch('SET_FILENAME', this.file.name)
                 clearInterval(intervalID);
                 console.log('...загрузка завершена');
                 this.isLoading = false;
                 router.push('./search/result');
           });
+        } else if (!this.file) {
+              this.isEmptyFileInput = true;
+        } else {
+              this.isEmptyCheckboxes = true;
         }
       },
 
