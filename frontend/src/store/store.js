@@ -40,7 +40,7 @@ export default new Vuex.Store({
                 });
             injectee.commit('SET_RESULT', res.data);
         },
-        SET_FILENAME: (injectee, payload) =>{
+        SET_FILENAME: (injectee, payload) => {
             console.log(payload);
             injectee.commit('SET_FILE_NAME', payload);
         }

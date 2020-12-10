@@ -114,15 +114,14 @@ export default {
 
     getFiles() {
       this.items.push({
-        'filename' : this.$store.getters.FILE_NAME,
-        'percent' : 100 - this.$store.getters.RESULT[4],
-        'lines' : this.$store.getters.RESULT[0].length,
+        'filename': this.$store.getters.FILE_NAME,
+        'percent': 100 - this.$store.getters.RESULT[4],
+        'lines': this.$store.getters.RESULT[0].length,
       });
     }
   },
 
-  mounted() {
-    this.totalRows = this.items.length
+  created() {
     this.getFiles();
   },
 }
