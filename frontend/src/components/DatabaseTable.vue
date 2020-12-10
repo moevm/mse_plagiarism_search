@@ -6,9 +6,18 @@
                  :state="Boolean(file1)"
                  placeholder="Choose a file or drop it here..."
                  drop-placeholder="Drop file here..."
-                 accept=".js, .c, .cpp, .java, .py, .h, .hpp"
+                 accept=".js, .c, .cpp, .java, .py, .h, .hpp, .zip"
     ></b-form-file>
-    <b-button variant="primary" v-on:click="submitFile()"> Upload </b-button>
+    <b-row>
+      <b-col cols="2">
+        <b-button variant="primary" v-on:click="submitFile()" style="height: 50px; width: 100%"> Upload </b-button>
+      </b-col>
+      <b-col cols="10">
+        <b-alert variant="info" show> supported formats: *.zip, *.js, *.java, *.cpp, *.c, *.py, *.h, *.hpp non-binary files.</b-alert>
+      </b-col>
+    </b-row>
+
+
 
     <!-- Main table element -->
     <b-table

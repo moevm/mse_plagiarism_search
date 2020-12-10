@@ -10,7 +10,7 @@
       <div class="col-8">
         <b-tabs content-class="mt-3">
           <b-tab title="File" active>
-            <b-alert variant="info" show> supported formats: *.js, *.java, *.cpp, *.c, *.py, *.h, *.hpp non-binary files.</b-alert>
+            <b-alert variant="info" show> supported formats: *.zip, *.js, *.java, *.cpp, *.c, *.py, *.h, *.hpp non-binary files.</b-alert>
             <p></p>
 
             <b-form-file
@@ -18,7 +18,7 @@
                 :state="Boolean(file)"
                 placeholder="Choose a file or drop it here..."
                 drop-placeholder="Drop file here..."
-                accept=".js, .c, .cpp, .java, .py, .h, .hpp"
+                accept=".js, .c, .cpp, .java, .py, .h, .hpp, .zip"
             ></b-form-file>
             <p></p>
             <b-alert v-model="isEmptyFileInput" variant="danger" dismissible>
