@@ -9,6 +9,8 @@ import tempfile
 def getAllMetaphones():
     metaphones = {}
     texts = {}
+    files = {}
+    extensions = {}
     q = Query.from_(
         db.tables["CodeFragment"]
     ).select("fileId", "metaphone", "text").orderby('id', order=Order.asc)
@@ -16,17 +18,25 @@ def getAllMetaphones():
     for row in rows:
         metaphones.setdefault(row[0], []).append(row[1])
         texts.setdefault(row[0], []).append(row[2])
-    return (metaphones, texts)
+        if not files.get(row[0]):
+            q = Query.from_(db.tables["File"]).select("path").where(db.tables["File"].id == int(row[0]))
+            res = executeQ(q, True)
+            for row_ in res:
+                files[row[0]] = row_[0]
+                extensions[row[0]] = row_[0].rsplit('.', 1)[1]
+                break
+    return (metaphones, texts, files, extensions)
 
-
+    
 @app.route('/checkFile/<fileId>', methods=['GET'])
 def trueAlgo(fileId, needList = False):
     allTime = time.time()
     fileId = int(fileId)
     
-    metaphones, texts = getAllMetaphones()
-    
+    metaphones, texts, files, extensions = getAllMetaphones()
+    currentExtension = extensions[fileId]
     fileMetaphones = metaphones[fileId]
+    
     distances = []
     stringsFile = []
     stringsRelevant = []
@@ -49,6 +59,9 @@ def trueAlgo(fileId, needList = False):
         
         for k, v in metaphones.items():
             if k == fileId:
+                continue
+            if currentExtension != extensions[k]:
+                #print("skip! ", currentExtension, " != ", extensions[k], files[k])
                 continue
             counter = 0
 
