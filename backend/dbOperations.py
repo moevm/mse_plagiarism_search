@@ -263,6 +263,11 @@ def getAllFiles():
     return jsonify(result)
 
 
+@app.route('/getExtensions', methods=['GET'])
+def getExtensions():
+    return jsonify(list(ALLOWED_EXTENSIONS) + list(ALLOWED_ARCHIVES))
+    
+    
 @app.route('/renameEntry/<id>', methods=['PUT'])
 def renameEntry(id):
     #print(request.args)
