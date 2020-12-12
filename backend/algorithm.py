@@ -40,9 +40,27 @@ def trueAlgo(fileId, needList = False):
     distances = []
     stringsFile = []
     stringsRelevant = []
+    stringsFrom = []
+    stringsFromNum = []
     result = []
     counterF = 0
+    lastFile = -1
     start_time = time.time()
+    
+    allKeys = list(metaphones.keys())
+    dropKeys = []
+    for k in allKeys:
+        if k == fileId:
+            dropKeys.append(k)
+            continue
+        if currentExtension != extensions[k]:
+            #print("skip! ", currentExtension, " != ", extensions[k], files[k])
+            dropKeys.append(k)
+            continue
+    for k in dropKeys:
+        allKeys.remove(k)
+        
+        
     for val in fileMetaphones:
         
         stringsFile.append(texts[fileId][counterF])
@@ -57,15 +75,12 @@ def trueAlgo(fileId, needList = False):
         stringsRelevant.append("_empty_")
         result.append("unique")
         
-        for k, v in metaphones.items():
-            if k == fileId:
-                continue
-            if currentExtension != extensions[k]:
-                #print("skip! ", currentExtension, " != ", extensions[k], files[k])
-                continue
-            counter = 0
+        curFile = -1
+        for k in allKeys:
 
-            for val2 in v:
+            counter = 0
+            
+            for val2 in metaphones[k]:
                 if val2 == "":
                     counter += 1
                     continue
@@ -82,10 +97,12 @@ def trueAlgo(fileId, needList = False):
                         str(val), val2, min(len(val), len(val2), 7) // 2 + 1
                     )
                 )
+                
                 rows = executeQ(q, True)
                 for row in rows:
                     if row[0] != maxD:
                         if minD > row[0]:
+                            curFile = k
                             stringsRelevant[len(stringsRelevant) -
                                             1] = texts[k][counter]
                             if row[0] == 0 or row[0] == 1:
@@ -96,9 +113,23 @@ def trueAlgo(fileId, needList = False):
                 counter += 1
                 if minD == 0 or minD == 1:
                     break
+                #!!!!!!!!!!!!!!!!!!
+                #if (minD == 2 or minD == 3) and lastFile == k:
+                #    break
             if minD == 0 or minD == 1:
-                    break
+                break
+            #!!!!!!!!!!!!!!!!!!
+            #if (minD == 2 or minD == 3) and lastFile == k:
+            #    break
         distances.append(minD)
+        stringsFromNum.append(curFile)
+        stringsFrom.append(files[curFile] if curFile != -1 else "")
+        if (minD == 0 or minD == 1):
+            allKeys.remove(curFile)
+            allKeys.insert(0, curFile)
+            lastFile = curFile
+        else:
+            lastFile = -1
         counterF += 1
      
     coincidences = 0
@@ -117,7 +148,7 @@ def trueAlgo(fileId, needList = False):
  
 
     print("RESULT: ", round(coincidences/(len(stringsFile)-empty)*100, 1))
-    fullResult = [stringsFile, stringsRelevant, distances, result, round(coincidences/(len(stringsFile)-empty)*100, 1)]
+    fullResult = [stringsFile, stringsRelevant, stringsFrom, distances, result, round(coincidences/(len(stringsFile)-empty)*100, 1)]
     print("--- %s seconds ---" % (time.time() - start_time))     
     if needList:
         return fullResult
