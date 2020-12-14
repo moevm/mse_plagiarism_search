@@ -7,6 +7,7 @@
 ## Запуск в docker
 1. Склонировать репозиторий  
 `git clone git@github.com:moevm/mse_plagiarism_search.git`  
+`cd mse_plagiarism_search`  
 2. Запустить docker
 * `docker-compose up`
 
