@@ -43,8 +43,10 @@ def trueAlgo(fileId, needList = False):
     stringsFrom = []
     stringsFromNum = []
     result = []
+    combo = []
     counterF = 0
     lastFile = -1
+    comboCounter = 1
     start_time = time.time()
     
     allKeys = list(metaphones.keys())
@@ -69,6 +71,9 @@ def trueAlgo(fileId, needList = False):
             stringsRelevant.append("_empty_")
             result.append("skipped")
             distances.append(255)
+            stringsFromNum.append(-1)
+            stringsFrom.append("")
+            combo.append(0)
             continue
 
         minD = 255
@@ -127,14 +132,26 @@ def trueAlgo(fileId, needList = False):
         if (minD == 0 or minD == 1):
             allKeys.remove(curFile)
             allKeys.insert(0, curFile)
-            lastFile = curFile
+        if lastFile == -1:
+            combo.append(1)
         else:
-            lastFile = -1
+            if lastFile == curFile:
+                comboCounter += 1
+            else:
+                comboCounter = 1
+            combo.append(comboCounter)
+            
+        lastFile = curFile
+       
+
+         
         counterF += 1
      
     coincidences = 0
     empty = 0
-    for i in range(len(stringsFile)):
+    currentCombo = 0
+    comboToAdd = 0
+    for i in reversed(range(len(stringsFile))):
         #print(
         #    stringsFile[i], " ||| ", stringsRelevant[i], " ||| ", distances[i],
         #    result[i]
@@ -145,10 +162,21 @@ def trueAlgo(fileId, needList = False):
             coincidences += 0.3
         elif result[i] == "skipped":
             empty += 1
+        
+        if currentCombo > 0:
+            if combo[i] == 0:
+                continue
+            combo[i] += comboToAdd
+            currentCombo -= 1
+            comboToAdd += 1
+        else:
+            if combo[i] > 1:
+                currentCombo = combo[i] - 1
+                comboToAdd = 1
  
 
     print("RESULT: ", round(coincidences/(len(stringsFile)-empty)*100, 1))
-    fullResult = [stringsFile, stringsRelevant, stringsFrom, distances, result, round(coincidences/(len(stringsFile)-empty)*100, 1)]
+    fullResult = [stringsFile, stringsRelevant, stringsFrom, combo, distances, result, round(coincidences/(len(stringsFile)-empty)*100, 1)]
     print("--- %s seconds ---" % (time.time() - start_time))     
     if needList:
         return fullResult
