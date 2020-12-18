@@ -53,33 +53,14 @@ export default {
   data() {
     return {
       file: null,
-
       isLoading: false,
       isFullPage: true,
       isEmptyFileInput: false,
-
-      selectedSearchOptions: [],
-      selectedMethodsOptions: [],
-      selectedOpenSourceOptions: [],
-
-      searchOptions: [
-        {text: 'Database search', value: 'database'},
-        {text: 'Open source search', value: 'opensource', notEnabled: true},
-      ],
-      methodsOptions: [
-        {text: 'Levenshtein distance', value: 'levenshtein'},
-        {text: 'PlagCheck', value: 'plagcheck', notEnabled: true},
-      ],
-      openSourceOptions: [
-        {text: 'StackOverflow', value: 'stackoverflow', notEnabled: true},
-        {text: 'GitHub', value: 'github', notEnabled: true},
-      ]
     }
   },
   methods: {
     submit() {
-      if (this.selectedSearchOptions.length && this.selectedMethodsOptions.length && this.file) {
-        this.isEmptyCheckboxes = false;
+      if (this.file) {
         this.isEmptyFileInput = false;
         let formData = new FormData();
         formData.append('file', this.file);
@@ -97,7 +78,7 @@ export default {
               this.isLoading = false;
               router.push('./search/result');
             });
-      } else if (!this.file) {
+      } else {
         this.isEmptyFileInput = true;
       }
     },
