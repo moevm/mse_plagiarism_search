@@ -140,7 +140,7 @@ export default {
 
     submitFile() {
       let formData = new FormData();
-      formData.append('file', this.file1);
+      formData.append('file', this.file);
       axios.post('http://127.0.0.1:5000/upload',
           formData,
           {
@@ -157,7 +157,7 @@ export default {
     },
 
     getFiles() {
-      axios.get("http://127.0.0.1:5000//getAllFiles")
+      axios.get("http://127.0.0.1:5000/getAllFiles")
           .then(res => {
             for (let key in res.data) {
               this.items.push({

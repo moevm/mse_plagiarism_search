@@ -5,9 +5,7 @@
     >
     </loading>
     <p class="h4 mb-2">Plagiarism search</p>
-    <div class="row">
       <!--      Left sub-menu -->
-      <div class="col-8">
         <b-tabs content-class="mt-3">
           <b-tab title="File" active>
             <b-alert variant="info" show> supported formats: *.zip, *.js, *.java, *.cpp, *.c, *.py, *.h, *.hpp
@@ -26,6 +24,9 @@
             <b-alert v-model="isEmptyFileInput" variant="danger" dismissible>
               You must select a file
             </b-alert>
+            <b-button variant="primary" v-on:click="submit()">
+              Start searching
+            </b-button>
           </b-tab>
           <b-tab title="Git">
             <div class="input-group mb-3">
@@ -34,52 +35,11 @@
                 <button class="btn btn-outline-secondary" type="button">Add</button>
               </div>
             </div>
+            <b-button variant="primary" v-on:click="submit()">
+              Start searching
+            </b-button>
           </b-tab>
         </b-tabs>
-      </div>
-      <!--      Right sub-menu -->
-      <div class="col-4">
-        <label> Search settings: </label>
-        <b-form-checkbox-group
-            v-model="selectedSearchOptions"
-            :options="searchOptions"
-            class="mb-3"
-            value-field="value"
-            text-field="text"
-            disabled-field="notEnabled"
-        >
-        </b-form-checkbox-group>
-
-        <label> Methods of search:</label>
-        <b-form-checkbox-group
-            v-model="selectedMethodsOptions"
-            :options="methodsOptions"
-            class="mb-3"
-            value-field="value"
-            text-field="text"
-            disabled-field="notEnabled"
-        >
-        </b-form-checkbox-group>
-
-        <label> Open source:</label>
-        <b-form-checkbox-group
-            v-model="selectedOpenSourceOptions"
-            :options="openSourceOptions"
-            class="mb-3"
-            value-field="value"
-            text-field="text"
-            disabled-field="notEnabled"
-        >
-        </b-form-checkbox-group>
-        <!--        Footer content -->
-        <b-alert v-model="isEmptyCheckboxes" variant="warning" id="danger" dismissible>
-          you must select the search method and the associated method!
-        </b-alert>
-        <b-button variant="primary" v-on:click="submit()">
-          Start searching
-        </b-button>
-      </div>
-    </div>
   </div>
 </template>
 
@@ -96,7 +56,6 @@ export default {
 
       isLoading: false,
       isFullPage: true,
-      isEmptyCheckboxes: false,
       isEmptyFileInput: false,
 
       selectedSearchOptions: [],
@@ -140,8 +99,6 @@ export default {
             });
       } else if (!this.file) {
         this.isEmptyFileInput = true;
-      } else {
-        this.isEmptyCheckboxes = true;
       }
     },
 
