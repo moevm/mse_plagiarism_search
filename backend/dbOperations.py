@@ -189,6 +189,7 @@ def addOneFile(dir, fileName, entryName="", id=0):
 def addManyFiles(dir, entryName, extensions=ALLOWED_EXTENSIONS):
 
     id = 0
+    results = []
     for dirpath, dirnames, filenames in os.walk(dir):
         # перебрать каталоги
         #for dirname in dirnames:
@@ -198,10 +199,29 @@ def addManyFiles(dir, entryName, extensions=ALLOWED_EXTENSIONS):
             if allowed_file_custom(filename, extensions):
                 #print("Файл:", os.path.join(dirpath, filename))
                 if id == 0:
-                    id = addOneFile(dirpath, filename, entryName)[0]
+                    returned = addOneFile(dirpath, filename, entryName)
+                    id = returned[0]
                     print(id)
+                    results.append(returned)
                 else:
-                    addOneFile(dirpath, filename, entryName, id)
+                    returned = addOneFile(dirpath, filename, entryName, id)
+                    results.append(returned)
+    return results
+
+def addManyFilesByList(fileList, entryName, extensions=ALLOWED_EXTENSIONS):
+    id = 0
+    results = []
+    for filename in fileList:
+        if allowed_file_custom(filename, extensions):
+            splitted = os.path.split(filename)
+            if id == 0:
+                returned = addOneFile(splitted[0], splitted[1], entryName)
+                id = returned[0]
+                print(id)
+                results.append(returned)
+            else:
+                returned = addOneFile(splitted[0], splitted[1], entryName, id)
+                results.append(returned)
 
 
 @app.route('/getEntryFiles/<id>', methods=['GET'])
@@ -243,6 +263,11 @@ def getAllFiles():
     return jsonify(result)
 
 
+@app.route('/getExtensions', methods=['GET'])
+def getExtensions():
+    return jsonify(list(ALLOWED_EXTENSIONS) + list(ALLOWED_ARCHIVES))
+    
+    
 @app.route('/renameEntry/<id>', methods=['PUT'])
 def renameEntry(id):
     #print(request.args)
