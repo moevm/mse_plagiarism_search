@@ -131,11 +131,16 @@ def addOneFile(dir, fileName, entryName="", id=0):
 
     q = Query.from_(
         db.tables["File"]
-    ).select("id").where(db.tables["File"].hash == hash_object.hexdigest())
+    ).select("id", "path").where(db.tables["File"].hash == hash_object.hexdigest())
     checkDuplicate = executeQ(q, True)
-    if checkDuplicate:
-        print("Дубликат!", checkDuplicate[0][0])
-        return (0, checkDuplicate[0][0])
+    for row in checkDuplicate:
+        if row[1] == os.path.join(dir, fileName):
+            print("Дубликат!", checkDuplicate[0][0])
+            return (0, checkDuplicate[0][0])
+            
+    #if checkDuplicate:
+    #    print("Дубликат!", checkDuplicate[0][0])
+    #    return (0, checkDuplicate[0][0])
 
     if id == 0:
         q = Query.into(
