@@ -4,6 +4,17 @@
 
 [Доска в Trello](https://trello.com/b/1opwXmzy)
 
+## Запуск в docker
+1. Склонировать репозиторий  
+`git clone git@github.com:moevm/mse_plagiarism_search.git`  
+`cd mse_plagiarism_search`  
+2. Запустить docker
+* `docker-compose up`
+
+Будут запущены:
+- Фронтэнд на порту 8080
+- pgAdmin 4 на порту 81
+
 ## Инструкция по запуску
 ### Запуск REST API
 Пререквизиты:
