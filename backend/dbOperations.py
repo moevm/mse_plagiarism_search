@@ -304,6 +304,14 @@ def deleteEntry(id):
     executeQ(q)
     return jsonify({"ok": "ok"})  
     
+@app.route('/deleteFile/<id>', methods=['DELETE'])
+def deleteFile(id):
+
+    q = Query.from_(db.tables["File"]
+                   ).delete().where(db.tables["File"].id == int(id))
+    executeQ(q)
+    return jsonify({"ok": "ok"})  
+    
 @app.route('/deleteAll', methods=['DELETE'])
 def deleteAll():
 
