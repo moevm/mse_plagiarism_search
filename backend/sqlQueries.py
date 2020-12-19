@@ -56,6 +56,21 @@ ALTER TABLE public."CodeFragment"
 
 """
 
+createSearchResultTable = """
+CREATE TABLE IF NOT EXISTS public."SearchResult"
+(
+    id integer NOT NULL DEFAULT nextval('"SearchResult_id_seq"'::regclass),
+    result jsonb,
+    "createdAt" timestamp with time zone,
+    CONSTRAINT "SearchResult_pkey" PRIMARY KEY (id)
+)
+
+TABLESPACE pg_default;
+
+ALTER TABLE public."SearchResult"
+    OWNER to postgres;
+
+"""
 createSequences = """
 CREATE EXTENSION IF NOT EXISTS fuzzystrmatch
     SCHEMA public
@@ -63,10 +78,12 @@ CREATE EXTENSION IF NOT EXISTS fuzzystrmatch
 CREATE SEQUENCE IF NOT EXISTS public."Entry_id_seq";
 CREATE SEQUENCE IF NOT EXISTS public."File_id_seq";
 CREATE SEQUENCE IF NOT EXISTS public."CodeFragment_id_seq";
+CREATE SEQUENCE IF NOT EXISTS public."SearchResult_id_seq";
 """
 
 dropTables = """
 DROP TABLE public."CodeFragment";
 DROP TABLE public."File";
 DROP TABLE public."Entry";
+DROP TABLE public."SearchResult";
 """

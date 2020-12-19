@@ -5,6 +5,7 @@ import os
 import time
 import zipfile
 import tempfile
+import json
 
 def getAllMetaphones():
     metaphones = {}
@@ -181,6 +182,9 @@ def trueAlgo(fileId, needList = False):
     if needList:
         return fullResult
     else:
+        jsonResult = json.dumps(fullResult)
+        q = Query.into(db.tables["SearchResult"]).columns("result", "createdAt").insert(jsonResult, functions.CurTimestamp())
+        executeQ(q)
         return jsonify(fullResult)
 
 
@@ -213,6 +217,9 @@ def loadAndCheckFile():
                     for val in info:
                         print(val)
                         results.append(trueAlgo(val[1], True))
+                    jsonResult = json.dumps(results)
+                    q = Query.into(db.tables["SearchResult"]).columns("result", "createdAt").insert(jsonResult, functions.CurTimestamp())
+                    executeQ(q)
                     return jsonify(results)
         else:
             return jsonify({"error": "failed"})

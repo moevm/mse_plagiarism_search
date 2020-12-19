@@ -271,7 +271,19 @@ def getAllFiles():
 @app.route('/getExtensions', methods=['GET'])
 def getExtensions():
     return jsonify(list(ALLOWED_EXTENSIONS) + list(ALLOWED_ARCHIVES))
-    
+
+@app.route('/getAllResults', methods=['GET'])
+def getAllResults():
+    q = Query.from_(db.tables["SearchResult"]
+                   ).select("id", "result", "createdAt").orderby('id', order=Order.asc)
+    return jsonify(executeQ(q, True))
+ 
+ 
+@app.route('/getResult/<id>', methods=['GET'])
+def getResult(id):
+    q = Query.from_(db.tables["SearchResult"]
+                   ).select("result", "createdAt").where(db.tables["SearchResult"].id == int(id))
+    return jsonify(executeQ(q, True))    
     
 @app.route('/renameEntry/<id>', methods=['PUT'])
 def renameEntry(id):
@@ -290,9 +302,16 @@ def deleteEntry(id):
     q = Query.from_(db.tables["Entry"]
                    ).delete().where(db.tables["Entry"].id == int(id))
     executeQ(q)
-    return jsonify({"ok": "ok"})
+    return jsonify({"ok": "ok"})  
+    
+@app.route('/deleteFile/<id>', methods=['DELETE'])
+def deleteFile(id):
 
-
+    q = Query.from_(db.tables["File"]
+                   ).delete().where(db.tables["File"].id == int(id))
+    executeQ(q)
+    return jsonify({"ok": "ok"})  
+    
 @app.route('/deleteAll', methods=['DELETE'])
 def deleteAll():
 
@@ -301,12 +320,27 @@ def deleteAll():
     return jsonify({"ok": "ok"})
 
 
+@app.route('/deleteResult/<id>', methods=['DELETE'])
+def deleteResult(id):
+    q = Query.from_(db.tables["SearchResult"]
+                   ).delete().where(db.tables["SearchResult"].id == int(id))
+    executeQ(q)
+    return jsonify({"ok": "ok"})  
+
+@app.route('/deleteAllResults', methods=['DELETE'])
+def deleteAllResults():
+
+    q = Query.from_(db.tables["SearchResult"]).delete()
+    executeQ(q)
+    return jsonify({"ok": "ok"})
+
 def getId(rows):
     for row in rows:
         return row[0]
 
 
 def executeQ(q, isFetchable=False):
+
     with con:
         with con.cursor() as cur:
             cur.execute(str(q))
