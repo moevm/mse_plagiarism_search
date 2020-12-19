@@ -7,6 +7,7 @@ class DBObjects:
         self.tables["Entry"] = Table("Entry")
         self.tables["File"] = Table("File")
         self.tables["CodeFragment"] = Table("CodeFragment")
+        self.tables["SearchResult"] = Table("SearchResult")
         self.func = {}
         self.func["metaphone"] = CustomFunction('metaphone', ['text', 'len'])
         self.func["levenshtein"] = CustomFunction(
