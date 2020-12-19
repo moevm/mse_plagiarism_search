@@ -20,6 +20,7 @@ def createTablesIfNotExists(con):
             cur.execute(sqlQueries.createEntryTable)
             cur.execute(sqlQueries.createFileTable)
             cur.execute(sqlQueries.createCodeFragmentTable)
+            cur.execute(sqlQueries.createSearchResultTable)
 class singleConnection:
     def __init__(self):
         self.con = psycopg2.connect(
