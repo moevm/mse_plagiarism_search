@@ -2,11 +2,11 @@
   <div class="overflow">
     <!-- File add controls -->
     <b-form-file class="mb-2"
-                 v-model="file"
-                 :state="Boolean(file)"
+                 v-model="files"
+                 :state="Boolean(files)"
                  placeholder="Choose a file or drop it here..."
                  drop-placeholder="Drop file here..."
-                 accept=".js, .c, .cpp, .java, .py, .h, .hpp, .zip"
+                 multiple accept=".js, .c, .cpp, .java, .py, .h, .hpp, .zip"
     ></b-form-file>
     <b-row>
       <b-col cols="2">
@@ -74,6 +74,7 @@
 
 <script>
 import axios from 'axios'
+import {URL} from '@/url.config'
 
 export default {
   data() {
@@ -102,7 +103,7 @@ export default {
       sortDirection: 'asc',
       filter: null,
       filterOn: [],
-      file: null,
+      files: [],
     }
   },
 
@@ -128,7 +129,7 @@ export default {
     },
 
     deleteItem(index) {
-      axios.delete(`http://127.0.0.1:5000/deleteEntry/${this.items[index].id}`);
+      axios.delete(`${URL + 'deleteFile/' + this.items[index].id}`);
       this.totalRows--;
       this.items.splice(index, 1);
     },
@@ -139,25 +140,28 @@ export default {
     },
 
     submitFile() {
-      let formData = new FormData();
-      formData.append('file', this.file);
-      axios.post('http://127.0.0.1:5000/upload',
-          formData,
-          {
-            headers: {
-              'Content-Type': 'multipart/form-data; charset=utf-8'
-            }
-          })
-          .then(() => {
-            this.items = [];
-            this.getFiles();
-          })
-          .catch(() => {
-          });
+      for(let i = 0; i < this.files.length; i++ ) {
+        let formData = new FormData();
+        formData.append('file', this.files[i]);
+
+        axios.post(`${URL+ 'upload'}`,
+            formData,
+            {
+              headers: {
+                'Content-Type': 'multipart/form-data; charset=utf-8'
+              }
+            })
+            .then(() => {
+              this.items = [];
+              this.getFiles();
+            })
+            .catch(() => {
+            });
+      }
     },
 
     getFiles() {
-      axios.get("http://127.0.0.1:5000/getAllFiles")
+      axios.get(`${URL + 'getAllFiles'}`)
           .then(res => {
             for (let key in res.data) {
               this.items.push({

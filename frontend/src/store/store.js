@@ -1,6 +1,7 @@
-import Vuex from 'vuex'
-import Vue from 'vue'
+import Vuex from 'vuex';
+import Vue from 'vue';
 import Axios from 'axios';
+import {URL} from '@/url.config';
 
 Vue.use(Vuex)
 
@@ -31,13 +32,14 @@ export default new Vuex.Store({
     actions: {
         SET_RESULT: async (injectee, payload) => {
             let res = await Axios.post(
-                'http://127.0.0.1:5000/loadAndCheckFile',
+                `${URL + 'loadAndCheckFile'}`,
                 payload,
                 {
                     headers: {
                         'Content-Type': 'multipart/form-data; charset=utf-8'
                     }
                 });
+            console.log(res.data);
             injectee.commit('SET_RESULT', res.data);
         },
         SET_FILENAME: (injectee, payload) => {

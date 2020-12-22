@@ -115,7 +115,7 @@ export default {
     getFiles() {
       this.items.push({
         'filename': this.$store.getters.FILE_NAME,
-        'percent': 100 - this.$store.getters.RESULT[4],
+        'percent': this.$store.getters.RESULT[6],
         'lines': this.$store.getters.RESULT[0].length,
       });
     }

@@ -5,41 +5,100 @@
     >
     </loading>
     <p class="h4 mb-2">Plagiarism search</p>
-      <!--      Left sub-menu -->
-        <b-tabs content-class="mt-3">
-          <b-tab title="File" active>
-            <b-alert variant="info" show> supported formats: *.zip, *.js, *.java, *.cpp, *.c, *.py, *.h, *.hpp
-              non-binary files.
-            </b-alert>
-            <p></p>
+    <!-- Left sub-menu -->
+    <b-tabs content-class="mt-3">
+      <b-tab title="File" active>
+        <b-form-group
+            label="File input:"
+            label-for="file-input"
+            description="file will be loaded into the database, supported formats: *.zip, *.js, *.java, *.cpp, *.c, *.py, *.h, *.hpp
+              non-binary files."
+            class="mb-0"
+            v-model="repository"
+        >
+          <b-form-file
+              id="file-input"
+              v-model="files"
+              :state="Boolean(files)"
+              placeholder="Choose a file or drop it here..."
+              drop-placeholder="Drop file here..."
+              multiple accept=".js, .c, .cpp, .java, .py, .h, .hpp, .zip"
+          ></b-form-file>
+        </b-form-group>
 
-            <b-form-file
-                v-model="file"
-                :state="Boolean(file)"
-                placeholder="Choose a file or drop it here..."
-                drop-placeholder="Drop file here..."
-                accept=".js, .c, .cpp, .java, .py, .h, .hpp, .zip"
-            ></b-form-file>
-            <p></p>
-            <b-alert v-model="isEmptyFileInput" variant="danger" dismissible>
-              You must select a file
-            </b-alert>
-            <b-button variant="primary" v-on:click="submit()">
-              Start searching
-            </b-button>
-          </b-tab>
-          <b-tab title="Git">
-            <div class="input-group mb-3">
-              <input type="text" class="form-control" id="basic-url" aria-describedby="basic-addon3">
-              <div class="input-group-append">
-                <button class="btn btn-outline-secondary" type="button">Add</button>
-              </div>
-            </div>
-            <b-button variant="primary" v-on:click="submit()">
-              Start searching
-            </b-button>
-          </b-tab>
-        </b-tabs>
+        <b-alert v-model="isEmptyFileInput" variant="danger" dismissible>
+          You must select a file
+        </b-alert>
+
+        <b-button variant="primary" v-on:click="submitFile()" style="margin-top: 10px">
+          Start searching
+        </b-button>
+      </b-tab>
+
+      <b-tab title="GitHub">
+        <b-form-group
+            label="GitHub repository link:"
+            label-for="github-url"
+            description="repository will be loaded into the database"
+            class="mb-0"
+            v-model="repository"
+        >
+          <b-form-input
+              id="github-url"
+              placeholder="Enter your repository..."
+          ></b-form-input>
+        </b-form-group>
+
+        <b-form-checkbox v-model="isPrivateRepo" name="check-button" style="margin-top: 10px" switch>
+          private repository
+        </b-form-checkbox>
+
+        <div class="container" id="app-container" v-if="isPrivateRepo" style="margin-top: 10px">
+          <b-form-group
+              label="Your GitHub nickname:"
+              label-for="login"
+              class="mb-0"
+              v-model="login"
+          >
+            <b-form-input
+                id="login"
+                placeholder="Enter Login..."
+            ></b-form-input>
+          </b-form-group>
+
+          <b-form-group
+              label="Your organization:"
+              label-for="organization"
+              class="mb-0"
+              v-model="organization"
+              style="margin-top: 10px"
+          >
+            <b-form-input
+                id="organization"
+                placeholder="Enter Organization..."
+            ></b-form-input>
+          </b-form-group>
+
+          <b-form-group
+              label="Your token:"
+              label-for="token"
+              class="mb-0"
+              v-model="token"
+              style="margin-top: 10px"
+          >
+            <b-form-input
+                id="token"
+                placeholder="Enter Token..."
+            ></b-form-input>
+          </b-form-group>
+        </div>
+
+        <b-button variant="primary" v-on:click="submitRepository()" style="margin-top: 10px">
+          Start searching
+        </b-button>
+      </b-tab>
+
+    </b-tabs>
   </div>
 </template>
 
@@ -52,15 +111,20 @@ export default {
   name: "Search",
   data() {
     return {
-      file: null,
+      files: [],
+      repository: null,
+      login: null,
+      organization: null,
+      token: null,
       isLoading: false,
       isFullPage: true,
       isEmptyFileInput: false,
+      isPrivateRepo: true
     }
   },
   methods: {
-    submit() {
-      if (this.file) {
+    submitFile() {
+      if (this.files.length !== 0) {
         this.isEmptyFileInput = false;
         let formData = new FormData();
         formData.append('file', this.file);
@@ -82,6 +146,19 @@ export default {
         this.isEmptyFileInput = true;
       }
     },
+
+    submitRepository() {
+      /* const intervalID = setInterval(() => {
+        console.log('загрузка');
+        this.isLoading = true;
+      }, 200);
+
+      if(this.isPrivateRepo) {
+
+      } else {
+
+      }*/
+    }
 
   },
 

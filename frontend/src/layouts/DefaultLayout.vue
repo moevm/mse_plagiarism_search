@@ -22,12 +22,14 @@
                   Database
                 </p>
               </b-nav-item>
+              <!--
               <b-nav-item href="/history">
                 <p class="h6 mb-2">
                   <b-icon icon="clock-history"></b-icon>
                   History
                 </p>
               </b-nav-item>
+              -->
               <b-nav-item href="/about">
                 <p class="h6 mb-2">
                   <b-icon icon="info-square"></b-icon>
