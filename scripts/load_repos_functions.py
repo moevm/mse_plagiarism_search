@@ -35,8 +35,11 @@ def load_repo():
         finded_files = find_files(os.path.join(app.config['UPLOAD_FOLDER'], repo_full_name))
         #for path in finded_files[0]:
             #os.remove(path) ##!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        addManyFilesByList(finded_files[1], repo_full_name)
-        return jsonify({"ok":"ok"})
+        result = addManyFilesByList(finded_files[1], repo_full_name)
+        forReturn = []
+        if result[0]:
+            forReturn.append(result[0][0])
+        return jsonify(forReturn)
     else:
         # такого репозитория нет, сообщить об этом пользователю
         print('git repositories is incorrect')
@@ -50,14 +53,21 @@ def load_repo_from_org(repo_full_name, path):
     finded_files = find_files(os.path.normpath(path + '/' + repo_full_name))
     #for path in finded_files[0]:
         #os.remove(path) ##!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    addManyFilesByList(finded_files[1], repo_full_name)
+    result = addManyFilesByList(finded_files[1], repo_full_name)
+    forReturn = []
+    if result[0]:
+        forReturn.append(result[0][0])
+    return forReturn
 
 @app.route('/load_repos_from_org', methods=['GET'])
 def load_repos_from_org():
     repo_full_names = request.form.getlist('url')
+    forReturn = []
     for repo_full_name in repo_full_names:
-        load_repo_from_org(repo_full_name, app.config['UPLOAD_FOLDER'])
-    return jsonify({"ok":"ok"})
+        result = load_repo_from_org(repo_full_name, app.config['UPLOAD_FOLDER'])
+        if result and result[0]:
+            forReturn.append(result[0])
+    return jsonify(forReturn)
 
 
 def get_all_repos_from_org():
