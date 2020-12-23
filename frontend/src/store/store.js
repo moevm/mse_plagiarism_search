@@ -7,44 +7,37 @@ Vue.use(Vuex)
 
 export default new Vuex.Store({
     state: {
-        algorithmResult: {},
-        fileName: ''
+        algorithmResults: [],
     },
 
     getters: {
-        RESULT: state => {
-            return state.algorithmResult;
+        RESULTS: state => {
+            return state.algorithmResults;
         },
-        FILE_NAME: state => {
-            return state.fileName;
-        }
     },
 
     mutations: {
-        SET_RESULT: (state, payload) => {
-            state.algorithmResult = payload;
+        SET_RESULTS: (state, payload) => {
+            state.algorithmResults.push(payload);
         },
-        SET_FILE_NAME: (state, payload) => {
-            state.fileName = payload;
-        }
     },
 
     actions: {
-        SET_RESULT: async (injectee, payload) => {
-            let res = await Axios.post(
-                `${URL + 'loadAndCheckFile'}`,
-                payload,
-                {
-                    headers: {
-                        'Content-Type': 'multipart/form-data; charset=utf-8'
-                    }
-                });
-            console.log(res.data);
-            injectee.commit('SET_RESULT', res.data);
+        SET_RESULTS: async (injectee, payload) => {
+            for (let value of payload.values()) {
+                let formData = new FormData;
+                formData.append('file', value)
+                let res = await Axios.post(
+                    `${URL + 'loadAndCheckFile'}`,
+                    formData,
+                    {
+                        headers: {
+                            'Content-Type': 'multipart/form-data; charset=utf-8'
+                        }
+                    });
+                injectee.commit('SET_RESULTS', [res.data, value.name]);
+            }
         },
-        SET_FILENAME: (injectee, payload) => {
-            console.log(payload);
-            injectee.commit('SET_FILE_NAME', payload);
-        }
-    }
+    },
+
 });

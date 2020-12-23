@@ -113,11 +113,16 @@ export default {
     },
 
     getFiles() {
-      this.items.push({
-        'filename': this.$store.getters.FILE_NAME,
-        'percent': this.$store.getters.RESULT[6],
-        'lines': this.$store.getters.RESULT[0].length,
-      });
+      for (let file of this.$store.getters.RESULTS)
+      {
+        console.log(file);
+        this.items.push({
+          'filename': file[1],
+          'percent': file[0][6],
+          'lines': file[0][0].length
+        })
+        this.totalRows++;
+      }
     }
   },
 

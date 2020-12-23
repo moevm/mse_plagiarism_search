@@ -14,7 +14,7 @@
             description="file will be loaded into the database, supported formats: *.zip, *.js, *.java, *.cpp, *.c, *.py, *.h, *.hpp
               non-binary files."
             class="mb-0"
-            v-model="repository"
+            v-model="files"
         >
           <b-form-file
               id="file-input"
@@ -127,18 +127,18 @@ export default {
       if (this.files.length !== 0) {
         this.isEmptyFileInput = false;
         let formData = new FormData();
-        formData.append('file', this.file);
+        for(let i = 0; i < this.files.length; ++i)
+          formData.append('file', this.files[i]);
 
         const intervalID = setInterval(() => {
           console.log('загрузка');
           this.isLoading = true;
         }, 200);
 
-        this.$store.dispatch('SET_RESULT', formData)
+        this.$store.dispatch('SET_RESULTS',  formData)
             .then(() => {
-              this.$store.dispatch('SET_FILENAME', this.file.name)
               clearInterval(intervalID);
-              console.log('...загрузка завершена');
+              console.log('...загрузка и обработка файлов завершена');
               this.isLoading = false;
               router.push('./search/result');
             });
