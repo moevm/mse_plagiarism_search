@@ -37,7 +37,7 @@ def load_repo():
             #os.remove(path) ##!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         result = addManyFilesByList(finded_files[1], repo_full_name)
         forReturn = []
-        if result[0]:
+        if result and result[0]:
             forReturn.append(result[0][0])
         return jsonify(forReturn)
     else:
@@ -55,7 +55,7 @@ def load_repo_from_org(repo_full_name, path):
         #os.remove(path) ##!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     result = addManyFilesByList(finded_files[1], repo_full_name)
     forReturn = []
-    if result[0]:
+    if result and result[0]:
         forReturn.append(result[0][0])
     return forReturn
 
