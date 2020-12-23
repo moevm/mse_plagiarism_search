@@ -38,6 +38,28 @@ export default new Vuex.Store({
                 injectee.commit('SET_RESULTS', [res.data, value.name]);
             }
         },
+
+        SET_GIT_RESULTS: async (injectee, payload) => {
+            console.log(payload)
+            if (payload.status) {
+                console.log('is private')
+            } else {
+                console.log(payload.repository)
+                let formData = new FormData();
+                formData.append('url', payload.repository)
+                let res = await Axios.post(
+                    `${URL + 'load_repo'}`,
+                    formData,
+                    {
+                        headers: {
+                            'Content-Type': 'multipart/form-data; charset=utf-8'
+                        }
+                    }
+                )
+                console.log(res)
+                console.log('is not private')
+            }
+        }
     },
 
 });

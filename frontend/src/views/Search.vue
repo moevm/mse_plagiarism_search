@@ -46,6 +46,7 @@
           <b-form-input
               id="github-url"
               placeholder="Enter your repository..."
+              v-model="repository"
           ></b-form-input>
         </b-form-group>
 
@@ -148,16 +149,24 @@ export default {
     },
 
     submitRepository() {
-      /* const intervalID = setInterval(() => {
-        console.log('загрузка');
-        this.isLoading = true;
-      }, 200);
+        console.log(this.repository);
 
-      if(this.isPrivateRepo) {
+        const intervalID = setInterval(() => {
+          console.log('загрузка');
+          this.isLoading = true;
+        }, 200);
 
-      } else {
-
-      }*/
+        let params = {
+          status: this.isPrivateRepo,
+          repository: this.repository
+        }
+          this.$store.dispatch('SET_GIT_RESULTS', params)
+              .then(() => {
+                clearInterval(intervalID);
+                console.log('...загрузка и обработка файлов завершена');
+                this.isLoading = false;
+                router.push('./search/result');
+              });
     }
 
   },

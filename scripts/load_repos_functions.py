@@ -11,7 +11,7 @@ from flask import request, jsonify
 
 
 def get_org_settings():
-    
+
     with open(os.path.join(os.getcwd(), "..", "scripts", "org_download_settings.json"), "r") as read_file:
         settings = json.load(read_file)
     return settings
@@ -26,7 +26,7 @@ def find_files(catalog):
     print(files_to_add)
     return (find_files, files_to_add)
 
-@app.route('/load_repo', methods=['GET'])
+@app.route('/load_repo', methods=['POST'])
 def load_repo():
     url = request.form['url']
     repo_full_name = url.replace("https://github.com/", "").replace(".git", "")
