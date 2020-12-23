@@ -87,3 +87,10 @@ DROP TABLE public."File";
 DROP TABLE public."Entry";
 DROP TABLE public."SearchResult";
 """
+
+dropSequences = """
+DROP SEQUENCE IF EXISTS public."Entry_id_seq";
+DROP SEQUENCE IF EXISTS public."File_id_seq";
+DROP SEQUENCE IF EXISTS public."CodeFragment_id_seq";
+DROP SEQUENCE IF EXISTS public."SearchResult_id_seq";
+"""
