@@ -36,6 +36,10 @@ def allowed_archive(filename):
 def allowed_file_custom(filename, allowedExtensions):
     return '.' in filename and \
                 filename.rsplit('.', 1)[1] in allowedExtensions
+                
+def skip_file_custom(filename):
+    return '.' in filename and \
+                filename.endswith("min.js")
 
 
 #Загрузка файлов в БД. Работает!
@@ -87,23 +91,45 @@ def uploaded_file(filename):
 
 
 def shorterString(string):
+
+    def tryDecode(str):
+        try:
+            bytes.decode(str, encoding='utf-8')
+            #return True
+        except Exception:
+            #print("exception! with bytes ", str)
+            return False
+        else:
+            return True
+    
     result = []
     if len(string) <= 255:
         result.append(string)
         return result
-
+    #exBytes = []
+    minus = 0
     for i in range(0, (len(string) // 253) + 1):
         if i > 0:
-            result.append(
-                str.encode("~~", encoding="utf-8") +
-                string[0 + (i * 253):min(253 * (i + 1), len(string))]
-            )
+            newStr = str.encode("~~", encoding="utf-8") + string[2 + (i * 253) - minus:min(2 + 253 * (i + 1) - minus, len(string))]
+           # b"".join(exBytes) + \
+            
+            #print(2 + (i * 253) - minus, 2 + 253 * (i + 1) - minus)
+            #exBytes = []
+            while (len(newStr) > 255 or not tryDecode(newStr)):
+                #print(newStr[len(newStr)-1], type(newStr[len(newStr)-1]))
+                #exBytes.append(bytes(newStr[len(newStr)-1]))
+                newStr = newStr[0:len(newStr)-1]
+                minus += 1
+            result.append(newStr)
         else:
-            result.append(
-                string[0 + (i * 255):min(255 * (i + 1), len(string))]
-            )
-    for v in result:
-        print(len(v))
+            newStr = string[0 + (i * 255):min(255 * (i + 1), len(string))]
+            while (not tryDecode(newStr)):
+                #exBytes.append(bytes(newStr[len(newStr)-1]))
+                newStr = newStr[0:len(newStr)-1]
+                minus += 1
+            result.append(newStr)
+    #for v in result:
+        #print("shorterString ", v, len(v))
     return result
 
 
@@ -135,9 +161,31 @@ def addOneFile(dir, fileName, entryName="", id=0):
     checkDuplicate = executeQ(q, True)
     for row in checkDuplicate:
         if row[1] == os.path.join(dir, fileName):
-            print("Дубликат!", checkDuplicate[0][0])
+            print("Дубликат!!!", checkDuplicate[0][0], row[1], os.path.join(dir, fileName))
             return (0, checkDuplicate[0][0])
-            
+        index1 = row[1].find(os.path.join("Local", "Temp")) 
+        index2 = os.path.join(dir, fileName).find(os.path.join("Local", "Temp"))
+        if index1 > -1 and index2 > -1:
+            path1 = row[1].split(os.sep)
+            path2 = os.path.join(dir, fileName).split(os.sep)
+            if len(path1) == len(path2):
+                startCheck = False
+                tempPassed = False
+                checkStatus = True
+                for i in range(len(path1)):
+                    if path1[i] == "Temp" and not tempPassed:
+                        tempPassed = True
+                    elif startCheck:
+                        if path1[i] != path2[i]:
+                            checkStatus = False
+                            break
+                        
+                    elif tempPassed:
+                        startCheck = True
+                    
+                if checkStatus:
+                    print("Дубликат!", checkDuplicate[0][0], row[1], os.path.join(dir, fileName))
+                    return (0, checkDuplicate[0][0])
     #if checkDuplicate:
     #    print("Дубликат!", checkDuplicate[0][0])
     #    return (0, checkDuplicate[0][0])
@@ -197,11 +245,11 @@ def addManyFiles(dir, entryName, extensions=ALLOWED_EXTENSIONS):
     results = []
     for dirpath, dirnames, filenames in os.walk(dir):
         # перебрать каталоги
-        #for dirname in dirnames:
-        #print("Каталог:", os.path.join(dirpath, dirname))
+        for dirname in dirnames:
+            print("Каталог:", os.path.join(dirpath, dirname))
         # перебрать файлы
         for filename in filenames:
-            if allowed_file_custom(filename, extensions):
+            if not skip_file_custom(filename) and allowed_file_custom(filename, extensions):
                 #print("Файл:", os.path.join(dirpath, filename))
                 if id == 0:
                     returned = addOneFile(dirpath, filename, entryName)
@@ -217,7 +265,7 @@ def addManyFilesByList(fileList, entryName, extensions=ALLOWED_EXTENSIONS):
     id = 0
     results = []
     for filename in fileList:
-        if allowed_file_custom(filename, extensions):
+        if not skip_file_custom(filename) and allowed_file_custom(filename, extensions):
             splitted = os.path.split(filename)
             if id == 0:
                 returned = addOneFile(splitted[0], splitted[1], entryName)
@@ -352,7 +400,11 @@ def dropAllTables():
     with con:
         with con.cursor() as cur:
             cur.execute(sqlQueries.dropTables)
+            cur.execute(sqlQueries.dropSequences)
     print("ALL TABLES WERE DELETED")
 
-
+#print(shorterString(str.encode("abcde abcde abcdeabcde abcdeabcdeabcdeabcde abcdeabcdeabcdeabcdeabcdeabcdeabcdeabcdeabcdeabcdeabcdeabcdeabcdeabcdeabcdeabcdeabcdeabcdeabcdeabcdeabcdeabcdeabcdeabcde abcdeabcdeabcdeabcdeabcdeabcdeabcdeabcdeabcdeabcdeabcdeabcdeabcde qwerty qwerty qwerty qwertyqwerty qwertyqwerty qwertyqwertyqwertyqwerty qwertyqwertyqwertyqwertyqwertyqwertyqwertyqwertyqwertyqwertyqwertyqwerty qwerty abcde abcde abcdeabcde abcdeabcdeabcdeabcde abcdeabcdeabcdeabcdeabcdeabcdeabcdeabcdeabcdeabcdeabcdeabcdeabcdeabcdeabcdeabcdeabcdeabcdeabcdeabcdeabcdeabcdeabcdeabcde abcdeabcdeabcdeabcdeabcdeabcdeabcdeabcdeabcdeabcdeabcdeabcdeabcde qwerty qwerty qwerty qwertyqwerty qwertyqwerty qwertyqwertyqwertyqwerty qwertyqwertyqwertyqwertyqwertyqwertyqwertyqwertyqwertyqwertyqwertyqwerty qwerty", encoding="utf-8")))
+#res = shorterString(str.encode("йцукен йцукен йцукен йцукен йцукен йцукенйцукенйцукен йцукенйцукенйцукен йцукен йцукен йцукен йцукен йцукен йцукен йцукен йцукен йцукенйцукенйцукен йцукенйцукенйцукен йцукен йцукен йцукен йцукен йцукен йцукен йцукен йцукен йцукенйцукенйцукен йцукенйцукенйцукен йцукен йцукен йцукен йцукен йцукен йцукен йцукен йцукен йцукенйцукенйцукен йцукенйцукенйцукен йцукен йцукен йцукен йцукен йцукен йцукен йцукен йцукен йцукенйцукенйцукен йцукенйцукенйцукен йцукен йцукен йцукен йцукен йцукен йцукен йцукен йцукен йцукенйцукенйцукен йцукенйцукенйцукен йцукен йцукен йцукен йцукен йцукен йцукен йцукен йцукен йцукенйцукенйцукен йцукенйцукенйцукен йцукен йцукен йцукен йцукен йцукен йцукен йцукен йцукен йцукенйцукенйцукен йцукенйцукенйцукен йцукен йцукен йцукен йцукен йцукен йцукен йцукен йцукен йцукенйцукенйцукен йцукенйцукенйцукен йцукен йцукен йцукен йцукен йцукен йцукен йцукен йцукен йцукенйцукенйцукен йцукенйцукенйцукен йцукен йцукен йцукен", encoding = "utf-8"))
+#for v in res:
+    #print(bytes.decode(v, encoding='utf-8'))
 #dropAllTables()
