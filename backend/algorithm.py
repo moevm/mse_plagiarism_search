@@ -224,5 +224,17 @@ def loadAndCheckFile():
         else:
             return jsonify({"error": "failed"})
 
+@app.route('/checkFilesByEntries', methods=['GET'])
+def checkFilesByEntries():
+    entries = request.form['entries']
+    listEntries = json.loads(entries)
+    results = []
+    for v in listEntries:
+        q = Query.from_(db.tables["File"]).select("id").where(db.tables["File"].entryId == int(v))
+        res = executeQ(q, True)
+        if res:
+            results.append(trueAlgo(res[0][0], True))
+    
+    return jsonify(results)
 
 #trueAlgo(8)
