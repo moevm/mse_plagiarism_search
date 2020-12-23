@@ -270,11 +270,12 @@ def addManyFilesByList(fileList, entryName, extensions=ALLOWED_EXTENSIONS):
             if id == 0:
                 returned = addOneFile(splitted[0], splitted[1], entryName)
                 id = returned[0]
-                print(id)
+                #print(id)
                 results.append(returned)
             else:
                 returned = addOneFile(splitted[0], splitted[1], entryName, id)
                 results.append(returned)
+    return results
 
 
 @app.route('/getEntryFiles/<id>', methods=['GET'])
