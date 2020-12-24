@@ -145,7 +145,7 @@ def addOneFile(dir, fileName, entryName="", id=0):
 
     code = ""
     splittedCode = []
-    print("AddFile: ", os.path.join(dir, fileName))
+    #print("AddFile: ", os.path.join(dir, fileName))
     with open(os.path.join(dir, fileName), encoding = 'utf-8', errors = "replace") as f:
         code = f.read()
 
@@ -157,12 +157,12 @@ def addOneFile(dir, fileName, entryName="", id=0):
 
     q = Query.from_(
         db.tables["File"]
-    ).select("id", "path").where(db.tables["File"].hash == hash_object.hexdigest())
+    ).select("id", "path", "entryId").where(db.tables["File"].hash == hash_object.hexdigest())
     checkDuplicate = executeQ(q, True)
     for row in checkDuplicate:
         if row[1] == os.path.join(dir, fileName):
             print("Дубликат!!!", checkDuplicate[0][0], row[1], os.path.join(dir, fileName))
-            return (0, checkDuplicate[0][0])
+            return (checkDuplicate[0][2], checkDuplicate[0][0], True)
         index1 = row[1].find(os.path.join("Local", "Temp")) 
         index2 = os.path.join(dir, fileName).find(os.path.join("Local", "Temp"))
         if index1 > -1 and index2 > -1:
@@ -185,7 +185,7 @@ def addOneFile(dir, fileName, entryName="", id=0):
                     
                 if checkStatus:
                     print("Дубликат!", checkDuplicate[0][0], row[1], os.path.join(dir, fileName))
-                    return (0, checkDuplicate[0][0])
+                    return (checkDuplicate[0][2], checkDuplicate[0][0], True)
     #if checkDuplicate:
     #    print("Дубликат!", checkDuplicate[0][0])
     #    return (0, checkDuplicate[0][0])
@@ -236,7 +236,7 @@ def addOneFile(dir, fileName, entryName="", id=0):
 
     os.chdir(cwd)
 
-    return (id, fileId)
+    return (id, fileId, False)
 
 
 def addManyFiles(dir, entryName, extensions=ALLOWED_EXTENSIONS):
@@ -253,8 +253,9 @@ def addManyFiles(dir, entryName, extensions=ALLOWED_EXTENSIONS):
                 #print("Файл:", os.path.join(dirpath, filename))
                 if id == 0:
                     returned = addOneFile(dirpath, filename, entryName)
-                    id = returned[0]
-                    print(id)
+                    if not returned[2]:
+                        id = returned[0]
+                    #print(id)
                     results.append(returned)
                 else:
                     returned = addOneFile(dirpath, filename, entryName, id)
@@ -269,7 +270,8 @@ def addManyFilesByList(fileList, entryName, extensions=ALLOWED_EXTENSIONS):
             splitted = os.path.split(filename)
             if id == 0:
                 returned = addOneFile(splitted[0], splitted[1], entryName)
-                id = returned[0]
+                if not returned[2]:
+                    id = returned[0]
                 #print(id)
                 results.append(returned)
             else:
