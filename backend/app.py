@@ -20,6 +20,7 @@ def createTablesIfNotExists(con):
             cur.execute(sqlQueries.createEntryTable)
             cur.execute(sqlQueries.createFileTable)
             cur.execute(sqlQueries.createCodeFragmentTable)
+            cur.execute(sqlQueries.createSearchResultTable)
 class singleConnection:
     def __init__(self):
         self.con = psycopg2.connect(
@@ -55,3 +56,7 @@ def internal_error(exception):
     return jsonify(response), 500
 import dbOperations
 import algorithm
+
+import sys
+sys.path.insert(0, os.path.join(os.getcwd(), "..", "scripts"))
+import load_repos_functions

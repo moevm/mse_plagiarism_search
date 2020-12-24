@@ -13,7 +13,6 @@ import sqlQueries
 import contextlib
 import shutil
 
-
 @contextlib.contextmanager
 def temporary_directory(*args, **kwargs):
     d = tempfile.mkdtemp(*args, **kwargs)
@@ -36,6 +35,10 @@ def allowed_archive(filename):
 def allowed_file_custom(filename, allowedExtensions):
     return '.' in filename and \
                 filename.rsplit('.', 1)[1] in allowedExtensions
+                
+def skip_file_custom(filename):
+    return '.' in filename and \
+                filename.endswith("min.js")
 
 
 #Загрузка файлов в БД. Работает!
@@ -87,23 +90,45 @@ def uploaded_file(filename):
 
 
 def shorterString(string):
+
+    def tryDecode(str):
+        try:
+            bytes.decode(str, encoding='utf-8')
+            #return True
+        except Exception:
+            #print("exception! with bytes ", str)
+            return False
+        else:
+            return True
+    
     result = []
     if len(string) <= 255:
         result.append(string)
         return result
-
+    #exBytes = []
+    minus = 0
     for i in range(0, (len(string) // 253) + 1):
         if i > 0:
-            result.append(
-                str.encode("~~", encoding="utf-8") +
-                string[0 + (i * 253):min(253 * (i + 1), len(string))]
-            )
+            newStr = str.encode("~~", encoding="utf-8") + string[2 + (i * 253) - minus:min(2 + 253 * (i + 1) - minus, len(string))]
+           # b"".join(exBytes) + \
+            
+            #print(2 + (i * 253) - minus, 2 + 253 * (i + 1) - minus)
+            #exBytes = []
+            while (len(newStr) > 255 or not tryDecode(newStr)):
+                #print(newStr[len(newStr)-1], type(newStr[len(newStr)-1]))
+                #exBytes.append(bytes(newStr[len(newStr)-1]))
+                newStr = newStr[0:len(newStr)-1]
+                minus += 1
+            result.append(newStr)
         else:
-            result.append(
-                string[0 + (i * 255):min(255 * (i + 1), len(string))]
-            )
-    for v in result:
-        print(len(v))
+            newStr = string[0 + (i * 255):min(255 * (i + 1), len(string))]
+            while (not tryDecode(newStr)):
+                #exBytes.append(bytes(newStr[len(newStr)-1]))
+                newStr = newStr[0:len(newStr)-1]
+                minus += 1
+            result.append(newStr)
+    #for v in result:
+        #print("shorterString ", v, len(v))
     return result
 
 
@@ -120,22 +145,50 @@ def addOneFile(dir, fileName, entryName="", id=0):
 
     code = ""
     splittedCode = []
-    with open(os.path.join(dir, fileName), encoding='utf-8') as f:
+    #print("AddFile: ", os.path.join(dir, fileName))
+    with open(os.path.join(dir, fileName), encoding = 'utf-8', errors = "replace") as f:
         code = f.read()
 
     #code = code.replace("\n", "")
     code = code.replace("\t", "")
 
-    codeInBytes = str.encode(code, encoding='utf-8')
+    codeInBytes = str.encode(code, encoding='utf-8', errors = "replace")
     hash_object = hashlib.sha256(codeInBytes)
 
     q = Query.from_(
         db.tables["File"]
-    ).select("id").where(db.tables["File"].hash == hash_object.hexdigest())
+    ).select("id", "path", "entryId").where(db.tables["File"].hash == hash_object.hexdigest())
     checkDuplicate = executeQ(q, True)
-    if checkDuplicate:
-        print("Дубликат!", checkDuplicate[0][0])
-        return (0, checkDuplicate[0][0])
+    for row in checkDuplicate:
+        if row[1] == os.path.join(dir, fileName):
+            print("Дубликат!!!", checkDuplicate[0][0], row[1], os.path.join(dir, fileName))
+            return (checkDuplicate[0][2], checkDuplicate[0][0], True)
+        index1 = row[1].find(os.path.join("Local", "Temp")) 
+        index2 = os.path.join(dir, fileName).find(os.path.join("Local", "Temp"))
+        if index1 > -1 and index2 > -1:
+            path1 = row[1].split(os.sep)
+            path2 = os.path.join(dir, fileName).split(os.sep)
+            if len(path1) == len(path2):
+                startCheck = False
+                tempPassed = False
+                checkStatus = True
+                for i in range(len(path1)):
+                    if path1[i] == "Temp" and not tempPassed:
+                        tempPassed = True
+                    elif startCheck:
+                        if path1[i] != path2[i]:
+                            checkStatus = False
+                            break
+                        
+                    elif tempPassed:
+                        startCheck = True
+                    
+                if checkStatus:
+                    print("Дубликат!", checkDuplicate[0][0], row[1], os.path.join(dir, fileName))
+                    return (checkDuplicate[0][2], checkDuplicate[0][0], True)
+    #if checkDuplicate:
+    #    print("Дубликат!", checkDuplicate[0][0])
+    #    return (0, checkDuplicate[0][0])
 
     if id == 0:
         q = Query.into(
@@ -162,10 +215,10 @@ def addOneFile(dir, fileName, entryName="", id=0):
     code = code.split("\n")
     #shift = 0
     for string in code:
-        stringInBytes = str.encode(string, encoding='utf-8')
+        stringInBytes = str.encode(string, encoding='utf-8', errors = "replace")
         strings = shorterString(stringInBytes)
         for val in strings:
-            splittedCode.append(bytes.decode(val, encoding='utf-8'))
+            splittedCode.append(bytes.decode(val, encoding='utf-8', errors = "replace"))
     i = 0
     for val in splittedCode:
         q = Query.into(db.tables["CodeFragment"]
@@ -183,25 +236,48 @@ def addOneFile(dir, fileName, entryName="", id=0):
 
     os.chdir(cwd)
 
-    return (id, fileId)
+    return (id, fileId, False)
 
 
 def addManyFiles(dir, entryName, extensions=ALLOWED_EXTENSIONS):
 
     id = 0
+    results = []
     for dirpath, dirnames, filenames in os.walk(dir):
         # перебрать каталоги
-        #for dirname in dirnames:
-        #print("Каталог:", os.path.join(dirpath, dirname))
+        for dirname in dirnames:
+            print("Каталог:", os.path.join(dirpath, dirname))
         # перебрать файлы
         for filename in filenames:
-            if allowed_file_custom(filename, extensions):
+            if not skip_file_custom(filename) and allowed_file_custom(filename, extensions):
                 #print("Файл:", os.path.join(dirpath, filename))
                 if id == 0:
-                    id = addOneFile(dirpath, filename, entryName)[0]
-                    print(id)
+                    returned = addOneFile(dirpath, filename, entryName)
+                    if not returned[2]:
+                        id = returned[0]
+                    #print(id)
+                    results.append(returned)
                 else:
-                    addOneFile(dirpath, filename, entryName, id)
+                    returned = addOneFile(dirpath, filename, entryName, id)
+                    results.append(returned)
+    return results
+
+def addManyFilesByList(fileList, entryName, extensions=ALLOWED_EXTENSIONS):
+    id = 0
+    results = []
+    for filename in fileList:
+        if not skip_file_custom(filename) and allowed_file_custom(filename, extensions):
+            splitted = os.path.split(filename)
+            if id == 0:
+                returned = addOneFile(splitted[0], splitted[1], entryName)
+                if not returned[2]:
+                    id = returned[0]
+                #print(id)
+                results.append(returned)
+            else:
+                returned = addOneFile(splitted[0], splitted[1], entryName, id)
+                results.append(returned)
+    return results
 
 
 @app.route('/getEntryFiles/<id>', methods=['GET'])
@@ -223,7 +299,7 @@ def getFile(id):
     for row in rows:
         if text == "":
             text += row[0]
-        elif row[0][0] == "~" and row[0][1] == "~":
+        elif len(row[0]) > 2 and row[0][0] == "~" and row[0][1] == "~":
             text += row[0][2:len(row)]
         else:
             text += "\n" + row[0]
@@ -243,6 +319,23 @@ def getAllFiles():
     return jsonify(result)
 
 
+@app.route('/getExtensions', methods=['GET'])
+def getExtensions():
+    return jsonify(list(ALLOWED_EXTENSIONS) + list(ALLOWED_ARCHIVES))
+
+@app.route('/getAllResults', methods=['GET'])
+def getAllResults():
+    q = Query.from_(db.tables["SearchResult"]
+                   ).select("id", "result", "createdAt").orderby('id', order=Order.asc)
+    return jsonify(executeQ(q, True))
+ 
+ 
+@app.route('/getResult/<id>', methods=['GET'])
+def getResult(id):
+    q = Query.from_(db.tables["SearchResult"]
+                   ).select("result", "createdAt").where(db.tables["SearchResult"].id == int(id))
+    return jsonify(executeQ(q, True))    
+    
 @app.route('/renameEntry/<id>', methods=['PUT'])
 def renameEntry(id):
     #print(request.args)
@@ -260,9 +353,16 @@ def deleteEntry(id):
     q = Query.from_(db.tables["Entry"]
                    ).delete().where(db.tables["Entry"].id == int(id))
     executeQ(q)
-    return jsonify({"ok": "ok"})
+    return jsonify({"ok": "ok"})  
+    
+@app.route('/deleteFile/<id>', methods=['DELETE'])
+def deleteFile(id):
 
-
+    q = Query.from_(db.tables["File"]
+                   ).delete().where(db.tables["File"].id == int(id))
+    executeQ(q)
+    return jsonify({"ok": "ok"})  
+    
 @app.route('/deleteAll', methods=['DELETE'])
 def deleteAll():
 
@@ -271,12 +371,27 @@ def deleteAll():
     return jsonify({"ok": "ok"})
 
 
+@app.route('/deleteResult/<id>', methods=['DELETE'])
+def deleteResult(id):
+    q = Query.from_(db.tables["SearchResult"]
+                   ).delete().where(db.tables["SearchResult"].id == int(id))
+    executeQ(q)
+    return jsonify({"ok": "ok"})  
+
+@app.route('/deleteAllResults', methods=['DELETE'])
+def deleteAllResults():
+
+    q = Query.from_(db.tables["SearchResult"]).delete()
+    executeQ(q)
+    return jsonify({"ok": "ok"})
+
 def getId(rows):
     for row in rows:
         return row[0]
 
 
 def executeQ(q, isFetchable=False):
+
     with con:
         with con.cursor() as cur:
             cur.execute(str(q))
@@ -288,7 +403,11 @@ def dropAllTables():
     with con:
         with con.cursor() as cur:
             cur.execute(sqlQueries.dropTables)
+            cur.execute(sqlQueries.dropSequences)
     print("ALL TABLES WERE DELETED")
 
-
+#print(shorterString(str.encode("abcde abcde abcdeabcde abcdeabcdeabcdeabcde abcdeabcdeabcdeabcdeabcdeabcdeabcdeabcdeabcdeabcdeabcdeabcdeabcdeabcdeabcdeabcdeabcdeabcdeabcdeabcdeabcdeabcdeabcdeabcde abcdeabcdeabcdeabcdeabcdeabcdeabcdeabcdeabcdeabcdeabcdeabcdeabcde qwerty qwerty qwerty qwertyqwerty qwertyqwerty qwertyqwertyqwertyqwerty qwertyqwertyqwertyqwertyqwertyqwertyqwertyqwertyqwertyqwertyqwertyqwerty qwerty abcde abcde abcdeabcde abcdeabcdeabcdeabcde abcdeabcdeabcdeabcdeabcdeabcdeabcdeabcdeabcdeabcdeabcdeabcdeabcdeabcdeabcdeabcdeabcdeabcdeabcdeabcdeabcdeabcdeabcdeabcde abcdeabcdeabcdeabcdeabcdeabcdeabcdeabcdeabcdeabcdeabcdeabcdeabcde qwerty qwerty qwerty qwertyqwerty qwertyqwerty qwertyqwertyqwertyqwerty qwertyqwertyqwertyqwertyqwertyqwertyqwertyqwertyqwertyqwertyqwertyqwerty qwerty", encoding="utf-8")))
+#res = shorterString(str.encode("йцукен йцукен йцукен йцукен йцукен йцукенйцукенйцукен йцукенйцукенйцукен йцукен йцукен йцукен йцукен йцукен йцукен йцукен йцукен йцукенйцукенйцукен йцукенйцукенйцукен йцукен йцукен йцукен йцукен йцукен йцукен йцукен йцукен йцукенйцукенйцукен йцукенйцукенйцукен йцукен йцукен йцукен йцукен йцукен йцукен йцукен йцукен йцукенйцукенйцукен йцукенйцукенйцукен йцукен йцукен йцукен йцукен йцукен йцукен йцукен йцукен йцукенйцукенйцукен йцукенйцукенйцукен йцукен йцукен йцукен йцукен йцукен йцукен йцукен йцукен йцукенйцукенйцукен йцукенйцукенйцукен йцукен йцукен йцукен йцукен йцукен йцукен йцукен йцукен йцукенйцукенйцукен йцукенйцукенйцукен йцукен йцукен йцукен йцукен йцукен йцукен йцукен йцукен йцукенйцукенйцукен йцукенйцукенйцукен йцукен йцукен йцукен йцукен йцукен йцукен йцукен йцукен йцукенйцукенйцукен йцукенйцукенйцукен йцукен йцукен йцукен йцукен йцукен йцукен йцукен йцукен йцукенйцукенйцукен йцукенйцукенйцукен йцукен йцукен йцукен", encoding = "utf-8"))
+#for v in res:
+    #print(bytes.decode(v, encoding='utf-8'))
 #dropAllTables()

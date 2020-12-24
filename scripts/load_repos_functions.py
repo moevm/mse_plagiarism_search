@@ -4,47 +4,71 @@ import subprocess
 import json
 import requests
 
-config = configparser.ConfigParser()
-config.read("config.ini", encoding='utf-8')
-ALLOWED_EXTENSIONS = set(config["allowed_extensions"].keys())
+
+from dbOperations import con, db, app, config, ALLOWED_EXTENSIONS, ALLOWED_ARCHIVES, addOneFile, addManyFiles, addManyFilesByList
+from flask import request, jsonify
+
 
 
 def get_org_settings():
-    with open("org_download_settings.json", "r") as read_file:
+    
+    with open(os.path.join(os.getcwd(), "..", "scripts", "org_download_settings.json"), "r") as read_file:
         settings = json.load(read_file)
     return settings
 
 
 def find_files(catalog):
     find_files = []
+    files_to_add = []
     for root, dirs, files in os.walk(catalog):
         find_files += [os.path.join(root, name) for name in files if not name.endswith(tuple(ALLOWED_EXTENSIONS))]
-    return find_files
+        files_to_add += [os.path.join(root, name) for name in files if name.endswith(tuple(ALLOWED_EXTENSIONS))]
+    print(files_to_add)
+    return (find_files, files_to_add)
 
-
-def load_repo(url, path):
+@app.route('/load_repo', methods=['POST'])
+def load_repo():
+    url = request.form['url']
     repo_full_name = url.replace("https://github.com/", "").replace(".git", "")
     if check_repo_exist(repo_full_name):
-        subprocess.run(["git", "clone", url, os.path.normpath(path + '/' + repo_full_name)])
-        for path in find_files(os.path.normpath(path + '/' + repo_full_name)):
-            os.remove(path)
+        subprocess.run(["git", "clone", url, os.path.join(app.config['UPLOAD_FOLDER'], repo_full_name)])
+        finded_files = find_files(os.path.join(app.config['UPLOAD_FOLDER'], repo_full_name))
+        #for path in finded_files[0]:
+            #os.remove(path) ##!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        result = addManyFilesByList(finded_files[1], repo_full_name)
+        forReturn = []
+        if result and result[0]:
+            forReturn.append(result[0][0])
+        return jsonify(forReturn)
     else:
         # такого репозитория нет, сообщить об этом пользователю
         print('git repositories is incorrect')
+        return jsonify({"error": "git repositories is incorrect"})
 
 
 def load_repo_from_org(repo_full_name, path):
     settings = get_org_settings()
     subprocess.run(["git", "clone", "https://" + settings['login'] + ":" + settings[
         'token'] + "@github.com/" + repo_full_name + ".git", os.path.normpath(path + '/' + repo_full_name)])
+    finded_files = find_files(os.path.normpath(path + '/' + repo_full_name))
+    #for path in finded_files[0]:
+        #os.remove(path) ##!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    result = addManyFilesByList(finded_files[1], repo_full_name)
+    forReturn = []
+    if result and result[0]:
+        forReturn.append(result[0][0])
+    return forReturn
 
-    for path in find_files(os.path.normpath(path + '/' + repo_full_name)):
-        os.remove(path)
-
-
-def load_repos_from_org(repo_full_names, path):
+@app.route('/load_repos_from_org', methods=['GET'])
+def load_repos_from_org():
+    repo_full_names = request.form.getlist('url')
+    forReturn = []
     for repo_full_name in repo_full_names:
-        load_repo_from_org(repo_full_name, path)
+        result = load_repo_from_org(repo_full_name, app.config['UPLOAD_FOLDER'])
+        if result and result[0]:
+            #print(result, result[0])
+            forReturn.append(result[0])
+    return jsonify(forReturn)
 
 
 def get_all_repos_from_org():
@@ -60,18 +84,23 @@ def get_all_repos_from_org():
         repos_full_names.append(repo['full_name'])
     return repos_full_names
 
-
-def update_org_settings(login, token, organization):
+@app.route('/update_org_settings', methods=['POST'])
+def update_org_settings():
+    login = request.form['login']
+    token = request.form['token']
+    organization = request.form['organization']
     if check_org_settings(login, token, organization):
         settings = get_org_settings()
         settings['login'] = login
         settings['token'] = token
         settings['organization'] = organization
-        with open('org_download_settings.json', 'w', encoding='utf-8') as f:
+        with open(os.path.join(os.getcwd(), "..", "scripts", "org_download_settings.json"), 'w', encoding='utf-8') as f:
             json.dump(settings, f, ensure_ascii=False, indent=4)
+        return jsonify({"ok":"ok"})
     else:
         # данные организации неверны, сообщить об этом пользователю
         print('Org data is incorrect')
+        return jsonify({"error": "Org data is incorrect"})
 
 
 def check_repo_exist(repo_full_name):
@@ -98,7 +127,7 @@ def check_org_settings(login, token, organization):
         # токен не действителен
         return False
 
-
+####Неактуально
 # load_repo("https://github.com/Heliconter/floyd-warshall-visualizer", "some path")
 
 # load_repos_from_org(
