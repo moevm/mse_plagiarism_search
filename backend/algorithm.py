@@ -28,7 +28,7 @@ def getAllMetaphones():
                 break
     return (metaphones, texts, files, extensions)
 
-    
+
 @app.route('/checkFile/<fileId>', methods=['GET'])
 def trueAlgo(fileId, needList = False, allMetaphones = None):
     allTime = time.time()
@@ -44,10 +44,10 @@ def trueAlgo(fileId, needList = False, allMetaphones = None):
         texts = allMetaphones[1]
         files = allMetaphones[2]
         extensions = allMetaphones[3]
-        
+
     currentExtension = extensions[fileId]
     fileMetaphones = metaphones[fileId]
-    
+
     distances = []
     stringsFile = []
     stringsRelevant = []
@@ -59,7 +59,7 @@ def trueAlgo(fileId, needList = False, allMetaphones = None):
     lastFile = -1
     comboCounter = 1
     start_time = time.time()
-    
+
     allKeys = list(metaphones.keys())
     dropKeys = []
     for k in allKeys:
@@ -72,10 +72,10 @@ def trueAlgo(fileId, needList = False, allMetaphones = None):
             continue
     for k in dropKeys:
         allKeys.remove(k)
-        
-        
+
+
     for val in fileMetaphones:
-        
+
         stringsFile.append(texts[fileId][counterF])
         if val == "":
             counterF += 1
@@ -90,12 +90,12 @@ def trueAlgo(fileId, needList = False, allMetaphones = None):
         minD = 255
         stringsRelevant.append("_empty_")
         result.append("unique")
-        
+
         curFile = -1
         for k in allKeys:
 
             counter = 0
-            
+
             for val2 in metaphones[k]:
                 if val2 == "":
                     counter += 1
@@ -107,13 +107,13 @@ def trueAlgo(fileId, needList = False, allMetaphones = None):
                     counter += 1
                     continue
                 maxD = min(len(val), len(val2), 7) // 2 + 2
-                
+
                 q = Query.select(
                     db.func["levenshtein_less_equal"](
                         str(val), val2, min(len(val), len(val2), 7) // 2 + 1
                     )
                 )
-                
+
                 rows = executeQ(q, True)
                 for row in rows:
                     if row[0] != maxD:
@@ -151,13 +151,13 @@ def trueAlgo(fileId, needList = False, allMetaphones = None):
             else:
                 comboCounter = 1
             combo.append(comboCounter)
-            
-        lastFile = curFile
-       
 
-         
+        lastFile = curFile
+
+
+
         counterF += 1
-     
+
     coincidences = 0
     empty = 0
     currentCombo = 0
@@ -173,7 +173,7 @@ def trueAlgo(fileId, needList = False, allMetaphones = None):
             coincidences += 0.3
         elif result[i] == "skipped":
             empty += 1
-        
+
         if currentCombo > 0:
             if combo[i] == 0:
                 continue
@@ -184,13 +184,13 @@ def trueAlgo(fileId, needList = False, allMetaphones = None):
             if combo[i] > 1:
                 currentCombo = combo[i] - 1
                 comboToAdd = 1
- 
+
     divisor = (len(stringsFile)-empty)
     if divisor == 0:
         divisor = 1
     print("RESULT: ", round(coincidences/divisor*100, 1))
     fullResult = [stringsFile, stringsRelevant, stringsFrom, combo, distances, result, round(coincidences/divisor*100, 1), files[fileId]]
-    print("--- %s seconds ---" % (time.time() - start_time))     
+    print("--- %s seconds ---" % (time.time() - start_time))
     if needList:
         return fullResult
     else:
@@ -237,7 +237,7 @@ def loadAndCheckFile():
         else:
             return jsonify({"error": "failed"})
 
-@app.route('/checkFilesByEntries', methods=['GET'])
+@app.route('/checkFilesByEntries', methods=['POST'])
 def checkFilesByEntries():
     entries = request.form['entries']
     listEntries = json.loads(entries)
@@ -248,7 +248,7 @@ def checkFilesByEntries():
         allMetaphones = getAllMetaphones()
         for val in res:
             results.append(trueAlgo(val[0], True, allMetaphones))
-    
+
     return jsonify(results)
 
 #trueAlgo(8)

@@ -42,15 +42,17 @@ export default new Vuex.Store({
 
         SET_GIT_RESULTS: async (injectee, payload) => {
             console.log(payload)
+            let formData = new FormData();
+            let loadRepository;
+
             if (payload.status) {
                 console.log('is private')
-                let formData = new FormData();
-                console.log(payload)
-                // https://github.com/Artex-Test-Organization/Test-Repository-A-Private
+                formData.append('url', payload.repository.replace(/(https:\/\/)?(www.)?github.com\//, ''));
+                console.log(payload.repository.replace(/(www.)?github.com/, ''));
                 formData.append('login', payload.login);
                 formData.append('token', payload.token);
                 formData.append('organization', payload.organization);
-                let first = await Axios.post(
+                let loginData = await Axios.post(
                     `${URL + 'update_org_settings'}`,
                     formData,
                     {
@@ -59,18 +61,19 @@ export default new Vuex.Store({
                         }
                     }
                 )
-                console.log(first.data);
-                /*
-                {
-            "login": "AlexRyzhickov",
-            "token": "fb464859ebc0740b7f841f2cd950c47d6f7ca627",
-            "organization": "Artex-Test-Organization"
-            "https://github.com/Artex-Test-Organization/Test-Repository-A-Privat"
-         }*/
+                console.log(loginData);
+                loadRepository = await Axios.post(
+                    `${URL + 'load_repos_from_org'}`,
+                    formData,
+                    {
+                        headers: {
+                            'Content-Type': 'multipart/form-data; charset=utf-8'
+                        }
+                    }
+                )
             } else {
-                let formData = new FormData();
                 formData.append('url', payload.repository);
-                let first = await Axios.post(
+                loadRepository = await Axios.post(
                     `${URL + 'load_repo'}`,
                     formData,
                     {
@@ -78,26 +81,23 @@ export default new Vuex.Store({
                             'Content-Type': 'multipart/form-data; charset=utf-8'
                         }
                     }
-                )
-                formData.append('entries', JSON.stringify(first.data))
-                let second = await Axios.post(
-                    `${URL + 'checkFilesByEntries'}`,
-                    formData,
-                    {
-                        headers: {
-                            'Content-Type': 'multipart/form-data; charset=utf-8'
-                        }
-                    }
-                )
-               // console.log(second.data);
-                for(let file of second.data.values())
-                {
-                    console.log(file[7]);
-                    injectee.commit('SET_RESULTS',[file, file[7]]);
-                }
-
-                console.log('is not private')
+                );
+                console.log(loadRepository)
             }
+
+            formData.append('entries', JSON.stringify(loadRepository.data));
+            let getResult = await Axios.post(
+                `${URL + 'checkFilesByEntries'}`,
+                formData,
+                {
+                    headers: {
+                        'Content-Type': 'multipart/form-data; charset=utf-8'
+                    }
+                }
+            )
+            console.log(getResult)
+            for (let file of getResult.data.values())
+                injectee.commit('SET_RESULTS', [file, file[7]]);
         }
     },
 
