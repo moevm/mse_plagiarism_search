@@ -12,6 +12,9 @@ import tempfile
 import sqlQueries
 import contextlib
 import shutil
+import sys
+sys.path.insert(0, os.path.join(os.getcwd(), "..", "prettier"))
+from prettier_scripts import prettierCode
 
 @contextlib.contextmanager
 def temporary_directory(*args, **kwargs):
@@ -150,6 +153,8 @@ def addOneFile(dir, fileName, entryName="", id=0):
         code = f.read()
 
     #code = code.replace("\n", "")
+    code = prettierCode(code, filename)
+
     code = code.replace("\t", "")
 
     codeInBytes = str.encode(code, encoding='utf-8', errors = "replace")
