@@ -170,7 +170,7 @@ def trueAlgo(fileId, needList = False, allMetaphones = None):
         if result[i] == "plagiarism":
             coincidences += 1
         elif result[i] == "similar":
-            coincidences += 0.3
+            coincidences += 0.1
         elif result[i] == "skipped":
             empty += 1
         
