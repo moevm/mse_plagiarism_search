@@ -26,7 +26,7 @@ def find_files(catalog):
     print(files_to_add)
     return (find_files, files_to_add)
 
-@app.route('/load_repo', methods=['GET'])
+@app.route('/load_repo', methods=['POST'])
 def load_repo():
     url = request.form['url']
     repo_full_name = url.replace("https://github.com/", "").replace(".git", "")
