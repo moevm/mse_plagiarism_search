@@ -19,13 +19,13 @@
     >
 
       <template v-slot:cell(percentBar)="row">
-        <template v-if="items[row.index]['percent'] >= 80">
+        <template v-if="+items[row.index]['percent'] >= 80">
           <b-progress :value="items[row.index]['percent']" variant="success"/>
         </template>
-        <template v-else-if="items[row.index]['percent'] >= 60">
+        <template v-else-if="+items[row.index]['percent'] >= 60">
           <b-progress :value="items[row.index]['percent']" variant="warning"/>
         </template>
-        <template v-else-if="items[row.index]['percent'] > 5">
+        <template v-else-if="+items[row.index]['percent'] > 5">
           <b-progress :value="items[row.index]['percent']" variant="danger"/>
         </template>
         <template v-else>

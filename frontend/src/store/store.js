@@ -2,6 +2,7 @@ import Vuex from 'vuex';
 import Vue from 'vue';
 import Axios from 'axios';
 import {URL} from '@/url.config';
+import axios from "axios";
 
 Vue.use(Vuex)
 
@@ -25,6 +26,7 @@ export default new Vuex.Store({
     actions: {
         SET_RESULTS: async (injectee, payload) => {
             for (let value of payload.values()) {
+                console.log(value);
                 let formData = new FormData;
                 formData.append('file', value)
                 let res = await Axios.post(
@@ -36,7 +38,14 @@ export default new Vuex.Store({
                         }
                     });
                 console.log(res.data);
-                injectee.commit('SET_RESULTS', [res.data, value.name]);
+                if(value.name.indexOf('.zip' || '.zipp') + 1) {
+                    for (let i = 0; i < res.data.length; ++i) {
+                        console.log(res.data[i])
+                        injectee.commit('SET_RESULTS', [res.data[i], res.data[i][7].replace(/^.*[\\/]/, '')]);
+                    }
+                } else {
+                    injectee.commit('SET_RESULTS', [res.data, value.name]);
+                }
             }
         },
 
@@ -98,6 +107,16 @@ export default new Vuex.Store({
             console.log(getResult)
             for (let file of getResult.data.values())
                 injectee.commit('SET_RESULTS', [file, file[7]]);
+        },
+
+        SET_HISTORY_RESULTS: async (injectee, payload) => {
+            axios.get(`${URL + 'getResult/' + payload}`)
+                .then(res => {
+                    for(let i = 0; i < res.data.length; ++i)
+                    {
+                        injectee.commit('SET_RESULTS', [res.data[0][i], res.data[0][i][7].replace(/^.*[\\/]/, '')]);
+                    }
+                });
         }
     },
 

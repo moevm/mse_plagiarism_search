@@ -123,7 +123,7 @@ export default {
       isFullPage: true,
       isEmptyFileInput: false,
       isEmptyRepoInput: false,
-      isPrivateRepo: true
+      isPrivateRepo: false
     }
   },
   methods: {

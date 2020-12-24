@@ -1,22 +1,25 @@
 <template>
   <div class="overflow">
     <!-- File add controls -->
-    <b-form-file class="mb-2"
-                 v-model="files"
-                 :state="Boolean(files)"
-                 placeholder="Choose a file or drop it here..."
-                 drop-placeholder="Drop file here..."
-                 multiple accept=".js, .c, .cpp, .java, .py, .h, .hpp, .zip"
-    ></b-form-file>
+    <b-form-group
+        label="File input:"
+        label-for="file-input"
+        description="file will be loaded into the database, supported formats: *.zip, *.js, *.java, *.cpp, *.c, *.py, *.h, *.hpp
+              non-binary files."
+        class="mb-0"
+    >
+      <b-form-file
+          id="file-input"
+          v-model="files"
+          :state="Boolean(files)"
+          placeholder="Choose a file or drop it here..."
+          drop-placeholder="Drop file here..."
+          multiple accept=".js, .c, .cpp, .java, .py, .h, .hpp, .zip"
+      ></b-form-file>
+    </b-form-group>
     <b-row>
-      <b-col cols="2">
-        <b-button variant="primary" v-on:click="submitFile()" style="height: 50px; width: 100%"> Upload</b-button>
-      </b-col>
-      <b-col cols="10">
-        <b-alert variant="info" show> supported formats: *.zip, *.js, *.java, *.cpp, *.c, *.py, *.h, *.hpp non-binary
-          files.
-        </b-alert>
-      </b-col>
+        <b-button variant="primary" v-on:click="submitFile()" style="margin: 10px"> Upload</b-button>
+        <!-- <b-button variant="danger" v-on:click="deleteAllFiles()" style="margin: 10px"> Delete All</b-button> -->
     </b-row>
 
 
@@ -68,19 +71,12 @@
         ></b-pagination>
       </b-col>
     </b-row>
-
-    <Tree
-        id="my-tree-id"
-        ref="my-tree-ref"
-        :nodes="treeDisplayData"
-    ></Tree>
   </div>
 </template>
 
 <script>
 import axios from 'axios'
 import {URL} from '@/url.config'
-import Tree from 'vuejs-tree'
 
 export default {
   data() {
@@ -98,31 +94,6 @@ export default {
           sortDirection: 'desc'
         },
         {key: 'actions', label: 'Actions', class: 'text-center'}
-      ],
-
-      treeDisplayData: [
-        {
-          text: 'Root 1',
-          nodes: [
-            {
-              text: 'Child 1',
-              nodes: [
-                {
-                  text: 'Grandchild 1'
-                },
-                {
-                  text: <a href="#">GrandChild</a>
-                }
-              ]
-            },
-            {
-              text: 'Child 2'
-            }
-          ]
-        },
-        {
-          text: 'Root 2'
-        }
       ],
 
       totalRows: 1,
@@ -146,10 +117,6 @@ export default {
             return {text: f.label, value: f.key}
           })
     }
-  },
-
-  components: {
-    'Tree': Tree
   },
 
   methods: {
@@ -207,6 +174,12 @@ export default {
               this.totalRows++;
             }
           });
+    },
+
+    deleteAllFiles() {
+      axios.delete(`${URL + 'deleteAll/'}`);
+      this.totalRows--;
+      this.items.splice(0, this.items.length)
     }
   },
 
