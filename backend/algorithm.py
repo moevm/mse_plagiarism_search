@@ -232,8 +232,8 @@ def checkFilesByEntries():
     for v in listEntries:
         q = Query.from_(db.tables["File"]).select("id").where(db.tables["File"].entryId == int(v))
         res = executeQ(q, True)
-        if res:
-            results.append(trueAlgo(res[0][0], True))
+        for val in res:
+            results.append(trueAlgo(val[0], True))
     
     return jsonify(results)
 
