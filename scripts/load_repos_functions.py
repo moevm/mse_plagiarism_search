@@ -66,7 +66,8 @@ def load_repos_from_org():
     for repo_full_name in repo_full_names:
         result = load_repo_from_org(repo_full_name, app.config['UPLOAD_FOLDER'])
         if result and result[0]:
-            forReturn.append(result[0][0])
+            #print(result, result[0])
+            forReturn.append(result[0])
     return jsonify(forReturn)
 
 
