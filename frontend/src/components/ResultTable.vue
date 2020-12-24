@@ -115,10 +115,9 @@ export default {
     getFiles() {
       for (let file of this.$store.getters.RESULTS)
       {
-        console.log(file);
         this.items.push({
-          'filename': file[1],
-          'percent': file[0][6],
+          'filename': file[1].replace(/^.*[\\//]/, ''),
+          'percent': 100 - file[0][6],
           'lines': file[0][0].length
         })
         this.totalRows++;

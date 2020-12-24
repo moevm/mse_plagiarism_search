@@ -31,7 +31,9 @@ export default {
   methods: {
     getFile() {
       this.fileName = this.$router.history.current.path.replace(/^.*[\\//]/, '');
-      let data = this.$store.getters.RESULTS.filter(file => file[1] === this.fileName)[0][0];
+      console.log(this.fileName)
+      console.log(this.$store.getters.RESULTS)
+      let data = this.$store.getters.RESULTS.filter(file => file[1].replace(/^.*[\\//]/, '') === this.fileName)[0][0];
       console.log(data);
       let code = [];
       for (let i = 0; i < data[0].length; ++i) {

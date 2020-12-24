@@ -14,7 +14,6 @@
             description="file will be loaded into the database, supported formats: *.zip, *.js, *.java, *.cpp, *.c, *.py, *.h, *.hpp
               non-binary files."
             class="mb-0"
-            v-model="files"
         >
           <b-form-file
               id="file-input"
@@ -41,7 +40,6 @@
             label-for="github-url"
             description="repository will be loaded into the database"
             class="mb-0"
-            v-model="repository"
         >
           <b-form-input
               id="github-url"
@@ -59,11 +57,11 @@
               label="Your GitHub nickname:"
               label-for="login"
               class="mb-0"
-              v-model="login"
           >
             <b-form-input
                 id="login"
                 placeholder="Enter Login..."
+                v-model="login"
             ></b-form-input>
           </b-form-group>
 
@@ -71,12 +69,12 @@
               label="Your organization:"
               label-for="organization"
               class="mb-0"
-              v-model="organization"
               style="margin-top: 10px"
           >
             <b-form-input
                 id="organization"
                 placeholder="Enter Organization..."
+                v-model="organization"
             ></b-form-input>
           </b-form-group>
 
@@ -84,12 +82,12 @@
               label="Your token:"
               label-for="token"
               class="mb-0"
-              v-model="token"
               style="margin-top: 10px"
           >
             <b-form-input
                 id="token"
                 placeholder="Enter Token..."
+                v-model="token"
             ></b-form-input>
           </b-form-group>
         </div>
@@ -158,7 +156,10 @@ export default {
 
         let params = {
           status: this.isPrivateRepo,
-          repository: this.repository
+          repository: this.repository,
+          login: this.login,
+          organization: this.organization,
+          token: this.token,
         }
           this.$store.dispatch('SET_GIT_RESULTS', params)
               .then(() => {
