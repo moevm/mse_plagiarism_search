@@ -3,3 +3,5 @@ psycopg2-binary==2.8.6
 Werkzeug==1.0.1
 PyPika==0.42.1
 flask-cors==3.0.9
+jsbeautifier==1.13.0
+yapf==0.30.0
