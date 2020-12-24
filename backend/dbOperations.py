@@ -14,8 +14,7 @@ import contextlib
 import shutil
 
 sys.path.insert(0, os.path.join(os.getcwd(), "..", "prettier"))
-import prettier_scripts
-import from prettier_scripts import prettierCode
+from prettier_scripts import prettierCode
 
 @contextlib.contextmanager
 def temporary_directory(*args, **kwargs):
