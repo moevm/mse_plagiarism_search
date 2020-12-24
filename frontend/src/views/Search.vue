@@ -35,6 +35,10 @@
       </b-tab>
 
       <b-tab title="GitHub">
+        <b-alert v-model="isEmptyRepoInput" variant="danger" dismissible>
+          You must enter all fields.
+        </b-alert>
+
         <b-form-group
             label="GitHub repository link:"
             label-for="github-url"
@@ -118,6 +122,7 @@ export default {
       isLoading: false,
       isFullPage: true,
       isEmptyFileInput: false,
+      isEmptyRepoInput: false,
       isPrivateRepo: true
     }
   },
@@ -147,6 +152,7 @@ export default {
     },
 
     submitRepository() {
+      if((this.repository !== null && !this.isPrivateRepo) || (this.repository !== null && this.organization !== null && this.login !== null && this.token !== null && this.isPrivateRepo)) {
         console.log(this.repository);
 
         const intervalID = setInterval(() => {
@@ -161,13 +167,16 @@ export default {
           organization: this.organization,
           token: this.token,
         }
-          this.$store.dispatch('SET_GIT_RESULTS', params)
-              .then(() => {
-                clearInterval(intervalID);
-                console.log('...загрузка и обработка файлов завершена');
-                this.isLoading = false;
-                router.push('./search/result');
-              });
+        this.$store.dispatch('SET_GIT_RESULTS', params)
+            .then(() => {
+              clearInterval(intervalID);
+              console.log('...загрузка и обработка файлов завершена');
+              this.isLoading = false;
+              router.push('./search/result');
+            });
+      } else {
+        this.isEmptyRepoInput = true;
+      }
     }
 
   },
