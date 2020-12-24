@@ -30,11 +30,21 @@ def getAllMetaphones():
 
     
 @app.route('/checkFile/<fileId>', methods=['GET'])
-def trueAlgo(fileId, needList = False):
+def trueAlgo(fileId, needList = False, allMetaphones = None):
     allTime = time.time()
     fileId = int(fileId)
-    
-    metaphones, texts, files, extensions = getAllMetaphones()
+    metaphones = {}
+    texts = {}
+    files = {}
+    extensions = {}
+    if not allMetaphones:
+        metaphones, texts, files, extensions = getAllMetaphones()
+    else:
+        metaphones = allMetaphones[0]
+        texts = allMetaphones[1]
+        files = allMetaphones[2]
+        extensions = allMetaphones[3]
+        
     currentExtension = extensions[fileId]
     fileMetaphones = metaphones[fileId]
     
@@ -175,9 +185,11 @@ def trueAlgo(fileId, needList = False):
                 currentCombo = combo[i] - 1
                 comboToAdd = 1
  
-
-    print("RESULT: ", round(coincidences/(len(stringsFile)-empty)*100, 1))
-    fullResult = [stringsFile, stringsRelevant, stringsFrom, combo, distances, result, round(coincidences/(len(stringsFile)-empty)*100, 1), files[fileId]]
+    divisor = (len(stringsFile)-empty)
+    if divisor == 0:
+        divisor = 1
+    print("RESULT: ", round(coincidences/divisor*100, 1))
+    fullResult = [stringsFile, stringsRelevant, stringsFrom, combo, distances, result, round(coincidences/divisor*100, 1), files[fileId]]
     print("--- %s seconds ---" % (time.time() - start_time))     
     if needList:
         return fullResult
@@ -214,9 +226,10 @@ def loadAndCheckFile():
                     zf.extractall(path)
                     info = addManyFiles(path, filename)
                     results = []
+                    allMetaphones = getAllMetaphones()
                     for val in info:
                         print(val)
-                        results.append(trueAlgo(val[1], True))
+                        results.append(trueAlgo(val[1], True, allMetaphones))
                     jsonResult = json.dumps(results)
                     q = Query.into(db.tables["SearchResult"]).columns("result", "createdAt").insert(jsonResult, functions.CurTimestamp())
                     executeQ(q)
@@ -232,8 +245,9 @@ def checkFilesByEntries():
     for v in listEntries:
         q = Query.from_(db.tables["File"]).select("id").where(db.tables["File"].entryId == int(v))
         res = executeQ(q, True)
+        allMetaphones = getAllMetaphones()
         for val in res:
-            results.append(trueAlgo(val[0], True))
+            results.append(trueAlgo(val[0], True, allMetaphones))
     
     return jsonify(results)
 
