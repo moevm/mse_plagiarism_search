@@ -12,7 +12,7 @@ import tempfile
 import sqlQueries
 import contextlib
 import shutil
-
+import sys
 sys.path.insert(0, os.path.join(os.getcwd(), "..", "prettier"))
 from prettier_scripts import prettierCode
 
