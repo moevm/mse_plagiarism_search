@@ -177,7 +177,7 @@ def trueAlgo(fileId, needList = False):
  
 
     print("RESULT: ", round(coincidences/(len(stringsFile)-empty)*100, 1))
-    fullResult = [stringsFile, stringsRelevant, stringsFrom, combo, distances, result, round(coincidences/(len(stringsFile)-empty)*100, 1)]
+    fullResult = [stringsFile, stringsRelevant, stringsFrom, combo, distances, result, round(coincidences/(len(stringsFile)-empty)*100, 1), files[fileId]]
     print("--- %s seconds ---" % (time.time() - start_time))     
     if needList:
         return fullResult
