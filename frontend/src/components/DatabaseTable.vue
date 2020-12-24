@@ -201,7 +201,7 @@ export default {
             for (let key in res.data) {
               this.items.push({
                 'id': key,
-                'filename': res.data[key][0].replace(/^.*[\\//uploads]/, ''),
+                'filename': res.data[key][0].replace(/^.*[\\/]/, ''),
                 'date': res.data[key][1]
               });
               this.totalRows++;

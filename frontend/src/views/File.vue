@@ -6,7 +6,7 @@
                          v-for="item in text"
                          :key="item.id"
                          :variant="item.status"
-                         v-b-tooltip:bottom="'from database search:  ' + item.match"
+                         v-b-popover.hover="popoverConfig(item)"
       >
         <div class="d-flex flex-row">
           <pre style="width: 50px">{{ item.id }} </pre>
@@ -41,7 +41,9 @@ export default {
         item['id'] = i
         code.push(data[0][i]);
         item['string'] = data[0][i];
+        item['similar'] = data[1][i];
         item['match'] = data[2][i];
+        item['stack'] = data[3][i];
         if (data[5][i] === 'plagiarism')
           item['status'] = 'danger';
         else if (data[5][i] === 'similar')
@@ -51,6 +53,21 @@ export default {
         this.text.push(item);
       }
       this.code = code.join('\n');
+    },
+
+    popoverConfig(item) {
+      return {
+        html: true,
+        title: () => {
+          return 'Results from database'
+        },
+        content: () => {
+          if (item.similar === '_empty_')
+            return '<b>Empty result</b><br><em>'
+          else
+            return '<b>Similar to string:</b><br><em>' + item.similar +'</em><br>' + '<b>Source of match:</b><br><em>' + item.match +'</em><br>' + '<b>Lines successively:</b><br><em>' + item.stack +'</em>'
+        }
+      }
     },
   },
 

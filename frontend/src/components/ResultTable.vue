@@ -25,8 +25,11 @@
         <template v-else-if="items[row.index]['percent'] >= 60">
           <b-progress :value="items[row.index]['percent']" variant="warning"/>
         </template>
-        <template v-else>
+        <template v-else-if="items[row.index]['percent'] > 5">
           <b-progress :value="items[row.index]['percent']" variant="danger"/>
+        </template>
+        <template v-else>
+          <b-progress :value="100" variant="danger"/>
         </template>
       </template>
 
@@ -117,7 +120,7 @@ export default {
       {
         this.items.push({
           'filename': file[1].replace(/^.*[\\//]/, ''),
-          'percent': 100 - file[0][6],
+          'percent': (100 - file[0][6]).toFixed(1),
           'lines': file[0][0].length
         })
         this.totalRows++;
