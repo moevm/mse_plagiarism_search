@@ -47,7 +47,7 @@ export default new Vuex.Store({
                 console.log(payload.repository)
                 let formData = new FormData();
                 formData.append('url', payload.repository)
-                let res = await Axios.post(
+                let first = await Axios.post(
                     `${URL + 'load_repo'}`,
                     formData,
                     {
@@ -56,7 +56,22 @@ export default new Vuex.Store({
                         }
                     }
                 )
-                console.log(res)
+                console.log('entries', first.data)
+                formData.append('entries', JSON.stringify(first.data))
+                let second = await Axios.post(
+                    `${URL + 'checkFilesByEntries'}`,
+                    formData,
+                    {
+                        headers: {
+                            'Content-Type': 'multipart/form-data; charset=utf-8'
+                        }
+                    }
+                )
+                console.log(typeof(second.data));
+                for (let i = 0; i < second.data.length; ++i) {
+                    injectee.commit('SET_RESULTS', [second.data[i], 'value.name']);
+                    console.log(second.data[i]);
+                }
                 console.log('is not private')
             }
         }

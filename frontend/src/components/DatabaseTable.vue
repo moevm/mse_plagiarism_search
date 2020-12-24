@@ -69,12 +69,18 @@
       </b-col>
     </b-row>
 
+    <Tree
+        id="my-tree-id"
+        ref="my-tree-ref"
+        :nodes="treeDisplayData"
+    ></Tree>
   </div>
 </template>
 
 <script>
 import axios from 'axios'
 import {URL} from '@/url.config'
+import Tree from 'vuejs-tree'
 
 export default {
   data() {
@@ -92,6 +98,31 @@ export default {
           sortDirection: 'desc'
         },
         {key: 'actions', label: 'Actions', class: 'text-center'}
+      ],
+
+      treeDisplayData: [
+        {
+          text: 'Root 1',
+          nodes: [
+            {
+              text: 'Child 1',
+              nodes: [
+                {
+                  text: 'Grandchild 1'
+                },
+                {
+                  text: <a href="#">GrandChild</a>
+                }
+              ]
+            },
+            {
+              text: 'Child 2'
+            }
+          ]
+        },
+        {
+          text: 'Root 2'
+        }
       ],
 
       totalRows: 1,
@@ -115,6 +146,10 @@ export default {
             return {text: f.label, value: f.key}
           })
     }
+  },
+
+  components: {
+    'Tree': Tree
   },
 
   methods: {
@@ -166,7 +201,7 @@ export default {
             for (let key in res.data) {
               this.items.push({
                 'id': key,
-                'filename': res.data[key][0].replace(/^.*[\\//]/, ''),
+                'filename': res.data[key][0].replace(/^.*[\\//uploads]/, ''),
                 'date': res.data[key][1]
               });
               this.totalRows++;
