@@ -13,7 +13,6 @@ import sqlQueries
 import contextlib
 import shutil
 
-
 @contextlib.contextmanager
 def temporary_directory(*args, **kwargs):
     d = tempfile.mkdtemp(*args, **kwargs)
@@ -146,13 +145,14 @@ def addOneFile(dir, fileName, entryName="", id=0):
 
     code = ""
     splittedCode = []
-    with open(os.path.join(dir, fileName), encoding='utf-8') as f:
+    print("AddFile: ", os.path.join(dir, fileName))
+    with open(os.path.join(dir, fileName), encoding = 'utf-8', errors = "replace") as f:
         code = f.read()
 
     #code = code.replace("\n", "")
     code = code.replace("\t", "")
 
-    codeInBytes = str.encode(code, encoding='utf-8')
+    codeInBytes = str.encode(code, encoding='utf-8', errors = "replace")
     hash_object = hashlib.sha256(codeInBytes)
 
     q = Query.from_(
@@ -215,10 +215,10 @@ def addOneFile(dir, fileName, entryName="", id=0):
     code = code.split("\n")
     #shift = 0
     for string in code:
-        stringInBytes = str.encode(string, encoding='utf-8')
+        stringInBytes = str.encode(string, encoding='utf-8', errors = "replace")
         strings = shorterString(stringInBytes)
         for val in strings:
-            splittedCode.append(bytes.decode(val, encoding='utf-8'))
+            splittedCode.append(bytes.decode(val, encoding='utf-8', errors = "replace"))
     i = 0
     for val in splittedCode:
         q = Query.into(db.tables["CodeFragment"]
@@ -297,7 +297,7 @@ def getFile(id):
     for row in rows:
         if text == "":
             text += row[0]
-        elif row[0][0] == "~" and row[0][1] == "~":
+        elif len(row[0]) > 2 and row[0][0] == "~" and row[0][1] == "~":
             text += row[0][2:len(row)]
         else:
             text += "\n" + row[0]
