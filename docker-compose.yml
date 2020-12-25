@@ -15,7 +15,7 @@ services:
             PGADMIN_DEFAULT_EMAIL: thexcloud@gmail.com
             PGADMIN_DEFAULT_PASSWORD: freedom_is_a_state_of_mind
         depends_on:
-          - postgres
+            - postgres
     postgres:
         restart: unless-stopped
         image: postgres
@@ -29,30 +29,32 @@ services:
             POSTGRES_PASSWORD: postgres
             POSTGRES_DB: postgres
         volumes:
-           - postgres_mse_plagiarism:/data/postgres
-   # backend:
-   #     container_name: "mse_plagiarism_backend"
-   #     # restart: unless-stopped
-   #     build: ./backend/
-   #     networks:
-   #         - postgres
-   #     depends_on:
-   #         - postgres
-   #     ports:
-   #         - 5000:5000
-   # frontend:
-   #     container_name: "mse_plagiarism_frontend"
-   #     build: ./frontend/
-   #     networks:
-   #         - postgres
-   #     depends_on:
-   #         - postgres
-   #         - backend
-   #     ports:
-   #         - 8080:8080
+            - postgres_mse_plagiarism:/data/postgres
+    backend:
+        container_name: "mse_plagiarism_backend"
+        # restart: unless-stopped
+        build:
+            context: .
+            dockerfile: ./backend/Dockerfile
+        networks:
+            - postgres
+        depends_on:
+            - postgres
+        ports:
+            - 5000:5000
+    frontend:
+        container_name: "mse_plagiarism_frontend"
+        build: ./frontend/
+        networks:
+            - postgres
+        depends_on:
+            - postgres
+            - backend
+        ports:
+            - 8080:8080
 networks:
-  postgres:
-    driver: bridge
+    postgres:
+        driver: bridge
 
 volumes:
     postgres_mse_plagiarism:
