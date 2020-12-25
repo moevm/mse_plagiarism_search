@@ -11,7 +11,7 @@ from flask import request, jsonify
 
 
 def get_org_settings():
-    
+
     with open(os.path.join(os.getcwd(), "..", "scripts", "org_download_settings.json"), "r") as read_file:
         settings = json.load(read_file)
     return settings
@@ -59,7 +59,7 @@ def load_repo_from_org(repo_full_name, path):
         forReturn.append(result[0][0])
     return forReturn
 
-@app.route('/load_repos_from_org', methods=['GET'])
+@app.route('/load_repos_from_org', methods=['POST'])
 def load_repos_from_org():
     repo_full_names = request.form.getlist('url')
     forReturn = []

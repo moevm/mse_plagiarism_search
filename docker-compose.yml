@@ -30,26 +30,26 @@ services:
             POSTGRES_DB: postgres
         volumes:
            - postgres_mse_plagiarism:/data/postgres
-    backend:
-        container_name: "mse_plagiarism_backend"
-        # restart: unless-stopped
-        build: ./backend/
-        networks:
-            - postgres
-        depends_on:
-            - postgres
-        ports:
-            - 5000:5000
-    frontend:
-        container_name: "mse_plagiarism_frontend"
-        build: ./frontend/
-        networks:
-            - postgres
-        depends_on:
-            - postgres
-            - backend
-        ports:
-            - 8080:8080
+   # backend:
+   #     container_name: "mse_plagiarism_backend"
+   #     # restart: unless-stopped
+   #     build: ./backend/
+   #     networks:
+   #         - postgres
+   #     depends_on:
+   #         - postgres
+   #     ports:
+   #         - 5000:5000
+   # frontend:
+   #     container_name: "mse_plagiarism_frontend"
+   #     build: ./frontend/
+   #     networks:
+   #         - postgres
+   #     depends_on:
+   #         - postgres
+   #         - backend
+   #     ports:
+   #         - 8080:8080
 networks:
   postgres:
     driver: bridge

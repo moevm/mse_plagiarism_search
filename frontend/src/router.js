@@ -16,18 +16,23 @@ export default new Router({
         },
         {
             path: '/database',
-            component: () => import('./views/Database.vue') },
+            component: () => import('./views/Database.vue')
+        },
         {
             path: '/history',
-            component: () => import('./views/History.vue') },
+            component: () => import('./views/History.vue')
+        },
         {
             path: '/about',
-            component: () => import('./views/About.vue')},
+            component: () => import('./views/About.vue')
+        },
         {
             path: '/search/result',
-            component: () => import('./views/Result.vue')},
+            component: () => import('./views/Result.vue')
+        },
         {
             path: '/search/result/:id',
-            component: () => import('./views/File')}
+            component: () => import('./views/File')
+        }
     ]
 })

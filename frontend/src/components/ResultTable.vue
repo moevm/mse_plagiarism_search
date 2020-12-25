@@ -19,14 +19,17 @@
     >
 
       <template v-slot:cell(percentBar)="row">
-        <template v-if="items[row.index]['percent'] >= 80">
+        <template v-if="+items[row.index]['percent'] >= 80">
           <b-progress :value="items[row.index]['percent']" variant="success"/>
         </template>
-        <template v-else-if="items[row.index]['percent'] >= 60">
+        <template v-else-if="+items[row.index]['percent'] >= 60">
           <b-progress :value="items[row.index]['percent']" variant="warning"/>
         </template>
-        <template v-else>
+        <template v-else-if="+items[row.index]['percent'] > 5">
           <b-progress :value="items[row.index]['percent']" variant="danger"/>
+        </template>
+        <template v-else>
+          <b-progress :value="100" variant="danger"/>
         </template>
       </template>
 
@@ -113,16 +116,19 @@ export default {
     },
 
     getFiles() {
-      this.items.push({
-        'filename' : this.$store.getters.FILE_NAME,
-        'percent' : 100 - this.$store.getters.RESULT[4],
-        'lines' : this.$store.getters.RESULT[0].length,
-      });
+      for (let file of this.$store.getters.RESULTS)
+      {
+        this.items.push({
+          'filename': file[1].replace(/^.*[\\//]/, ''),
+          'percent': (100 - file[0][6]).toFixed(1),
+          'lines': file[0][0].length
+        })
+        this.totalRows++;
+      }
     }
   },
 
-  mounted() {
-    this.totalRows = this.items.length
+  created() {
     this.getFiles();
   },
 }

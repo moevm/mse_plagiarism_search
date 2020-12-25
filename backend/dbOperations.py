@@ -38,7 +38,7 @@ def allowed_archive(filename):
 def allowed_file_custom(filename, allowedExtensions):
     return '.' in filename and \
                 filename.rsplit('.', 1)[1] in allowedExtensions
-                
+
 def skip_file_custom(filename):
     return '.' in filename and \
                 filename.endswith("min.js")
@@ -103,7 +103,7 @@ def shorterString(string):
             return False
         else:
             return True
-    
+
     result = []
     if len(string) <= 255:
         result.append(string)
@@ -114,7 +114,7 @@ def shorterString(string):
         if i > 0:
             newStr = str.encode("~~", encoding="utf-8") + string[2 + (i * 253) - minus:min(2 + 253 * (i + 1) - minus, len(string))]
            # b"".join(exBytes) + \
-            
+
             #print(2 + (i * 253) - minus, 2 + 253 * (i + 1) - minus)
             #exBytes = []
             while (len(newStr) > 255 or not tryDecode(newStr)):
@@ -153,7 +153,7 @@ def addOneFile(dir, fileName, entryName="", id=0):
         code = f.read()
 
     #code = code.replace("\n", "")
-    code = prettierCode(code, filename)
+    code = prettierCode(code, fileName)
 
     code = code.replace("\t", "")
 
@@ -168,7 +168,7 @@ def addOneFile(dir, fileName, entryName="", id=0):
         if row[1] == os.path.join(dir, fileName):
             print("Дубликат!!!", checkDuplicate[0][0], row[1], os.path.join(dir, fileName))
             return (checkDuplicate[0][2], checkDuplicate[0][0], True)
-        index1 = row[1].find(os.path.join("Local", "Temp")) 
+        index1 = row[1].find(os.path.join("Local", "Temp"))
         index2 = os.path.join(dir, fileName).find(os.path.join("Local", "Temp"))
         if index1 > -1 and index2 > -1:
             path1 = row[1].split(os.sep)
@@ -184,10 +184,10 @@ def addOneFile(dir, fileName, entryName="", id=0):
                         if path1[i] != path2[i]:
                             checkStatus = False
                             break
-                        
+
                     elif tempPassed:
                         startCheck = True
-                    
+
                 if checkStatus:
                     print("Дубликат!", checkDuplicate[0][0], row[1], os.path.join(dir, fileName))
                     return (checkDuplicate[0][2], checkDuplicate[0][0], True)
@@ -333,14 +333,14 @@ def getAllResults():
     q = Query.from_(db.tables["SearchResult"]
                    ).select("id", "result", "createdAt").orderby('id', order=Order.asc)
     return jsonify(executeQ(q, True))
- 
- 
+
+
 @app.route('/getResult/<id>', methods=['GET'])
 def getResult(id):
     q = Query.from_(db.tables["SearchResult"]
                    ).select("result", "createdAt").where(db.tables["SearchResult"].id == int(id))
-    return jsonify(executeQ(q, True))    
-    
+    return jsonify(executeQ(q, True))
+
 @app.route('/renameEntry/<id>', methods=['PUT'])
 def renameEntry(id):
     #print(request.args)
@@ -358,16 +358,16 @@ def deleteEntry(id):
     q = Query.from_(db.tables["Entry"]
                    ).delete().where(db.tables["Entry"].id == int(id))
     executeQ(q)
-    return jsonify({"ok": "ok"})  
-    
+    return jsonify({"ok": "ok"})
+
 @app.route('/deleteFile/<id>', methods=['DELETE'])
 def deleteFile(id):
 
     q = Query.from_(db.tables["File"]
                    ).delete().where(db.tables["File"].id == int(id))
     executeQ(q)
-    return jsonify({"ok": "ok"})  
-    
+    return jsonify({"ok": "ok"})
+
 @app.route('/deleteAll', methods=['DELETE'])
 def deleteAll():
 
@@ -381,7 +381,7 @@ def deleteResult(id):
     q = Query.from_(db.tables["SearchResult"]
                    ).delete().where(db.tables["SearchResult"].id == int(id))
     executeQ(q)
-    return jsonify({"ok": "ok"})  
+    return jsonify({"ok": "ok"})
 
 @app.route('/deleteAllResults', methods=['DELETE'])
 def deleteAllResults():

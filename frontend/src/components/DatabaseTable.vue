@@ -1,13 +1,27 @@
 <template>
   <div class="overflow">
     <!-- File add controls -->
-    <b-form-file class="mb-2"
-                 v-model="file1"
-                 :state="Boolean(file1)"
-                 placeholder="Choose a file or drop it here..."
-                 drop-placeholder="Drop file here..."
-    ></b-form-file>
-    <b-button variant="primary" v-on:click="submitFile()"> Upload </b-button>
+    <b-form-group
+        label="File input:"
+        label-for="file-input"
+        description="file will be loaded into the database, supported formats: *.zip, *.js, *.java, *.cpp, *.c, *.py, *.h, *.hpp
+              non-binary files."
+        class="mb-0"
+    >
+      <b-form-file
+          id="file-input"
+          v-model="files"
+          :state="Boolean(files)"
+          placeholder="Choose a file or drop it here..."
+          drop-placeholder="Drop file here..."
+          multiple accept=".js, .c, .cpp, .java, .py, .h, .hpp, .zip"
+      ></b-form-file>
+    </b-form-group>
+    <b-row>
+        <b-button variant="primary" v-on:click="submitFile()" style="margin: 10px"> Upload</b-button>
+        <!-- <b-button variant="danger" v-on:click="deleteAllFiles()" style="margin: 10px"> Delete All</b-button> -->
+    </b-row>
+
 
     <!-- Main table element -->
     <b-table
@@ -57,19 +71,12 @@
         ></b-pagination>
       </b-col>
     </b-row>
-
   </div>
 </template>
 
 <script>
-/*
-  #TODO
-    1) пагинация
-    2) удаление из папки ../backend/uploads
-    3) загрузка сразу нескольких файлов
-*/
-
 import axios from 'axios'
+import {URL} from '@/url.config'
 
 export default {
   data() {
@@ -78,7 +85,14 @@ export default {
 
       fields: [
         {key: 'filename', label: 'Filename', sortable: true, sortDirection: 'desc'},
-        {key: 'date', label: 'Date of download', sortable: true, class: 'text-center', formatter: "formatDateAssigned", sortDirection: 'desc'},
+        {
+          key: 'date',
+          label: 'Date of download',
+          sortable: true,
+          class: 'text-center',
+          formatter: "formatDateAssigned",
+          sortDirection: 'desc'
+        },
         {key: 'actions', label: 'Actions', class: 'text-center'}
       ],
 
@@ -91,8 +105,7 @@ export default {
       sortDirection: 'asc',
       filter: null,
       filterOn: [],
-      file1: null,
-      file2: null,
+      files: [],
     }
   },
 
@@ -118,7 +131,8 @@ export default {
     },
 
     deleteItem(index) {
-      axios.delete(`http://127.0.0.1:5000/deleteEntry/${this.items[index].id}`);
+      axios.delete(`${URL + 'deleteFile/' + this.items[index].id}`);
+      this.totalRows--;
       this.items.splice(index, 1);
     },
 
@@ -127,44 +141,47 @@ export default {
       this.currentPage = 1
     },
 
-    submitFile() {
-      let formData = new FormData();
-      formData.append('file', this.file1);
-      axios.post( 'http://127.0.0.1:5000/upload',
-          formData,
-          {
-            headers: {
-              'Content-Type': 'multipart/form-data; charset=utf-8'
-            }
-          })
-          .then(() => {
-            this.items = [];
-            this.getFiles();
-          })
-          .catch(() => {
-          });
+    async submitFile() {
+      for(let i = 0; i < this.files.length; ++i) {
+        let formData = new FormData();
+        formData.append('file', this.files[i]);
+        await axios.post(`${URL+ 'upload'}`,
+            formData,
+            {
+              headers: {
+                'Content-Type': 'multipart/form-data; charset=utf-8'
+              }
+            }).then(() => {
+              this.items = [];
+          this.getFiles();
+
+        })
+      }
     },
 
     getFiles() {
-      axios.get("http://127.0.0.1:5000//getAllFiles")
+      axios.get(`${URL + 'getAllFiles'}`)
           .then(res => {
-            for (let key in res.data)
-                this.items.push({
-                      'id' : key,
-                      'filename' : res.data[key][0].replace(/^.*[\\//]/, ''),
-                      'date' : res.data[key][1]
-                    });
+            for (let key in res.data) {
+              this.items.push({
+                'id': key,
+                'filename': res.data[key][0].replace(/^.*[\\/]/, ''),
+                'date': res.data[key][1]
+              });
+              this.totalRows++;
+            }
           });
-    }
-  },
+    },
 
-  mounted() {
-    this.totalRows = this.items.length
+    deleteAllFiles() {
+      axios.delete(`${URL + 'deleteAll/'}`);
+      this.totalRows--;
+      this.items.splice(0, this.items.length)
+    }
   },
 
   created() {
     this.getFiles();
-    this.totalRows = this.items.length
   }
 }
 </script>

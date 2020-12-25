@@ -1,77 +1,107 @@
 <template>
   <div class="main-content">
     <loading :active.sync="isLoading"
-             :is-full-page="fullPage"
+             :is-full-page="isFullPage"
     >
     </loading>
     <p class="h4 mb-2">Plagiarism search</p>
-    <div class="row">
-      <!--      Left sub-menu -->
-      <div class="col-8">
-        <b-tabs content-class="mt-3">
-          <b-tab title="File" active>
-            <!-- <b-alert show variant="info"> supported formats: *.zip, *.rar, non-binary files.</b-alert> -->
-            <b-alert variant="info"> supported formats: *.js, *.java, *.cpp, *.c, non-binary files.</b-alert>
-            <b-form-file
-                v-model="file1"
-                :state="Boolean(file1)"
-                placeholder="Choose a file or drop it here..."
-                drop-placeholder="Drop file here..."
-            ></b-form-file>
-
-          </b-tab>
-          <b-tab title="Git">
-
-            <div class="input-group mb-3">
-              <input type="text" class="form-control" id="basic-url" aria-describedby="basic-addon3">
-              <div class="input-group-append">
-                <button class="btn btn-outline-secondary" type="button">Add</button>
-              </div>
-            </div>
-
-
-          </b-tab>
-        </b-tabs>
-      </div>
-      <!--      Right sub-menu -->
-      <div class="col-4">
-        <label> Search settings: </label>
-          <b-form-checkbox-group
-              v-model="selectedSearchOptions"
-              :options="searchOptions"
-              class="mb-3"
-              value-field="value"
-              text-field="text"
-              disabled-field="notEnabled"
-          >
-          </b-form-checkbox-group>
-
-        <label> Methods of search:</label>
-          <b-form-checkbox-group
-              v-model="selectedMethodsOptions"
-              :options="methodsOptions"
-              class="mb-3"
-              value-field="value"
-              text-field="text"
-              disabled-field="notEnabled"
-          >
-          </b-form-checkbox-group>
-
-        <label> Open source:</label>
-        <b-form-checkbox-group
-            v-model="selectedOpenSourceOptions"
-            :options="openSourceOptions"
-            class="mb-3"
-            value-field="value"
-            text-field="text"
-            disabled-field="notEnabled"
+    <!-- Left sub-menu -->
+    <b-tabs content-class="mt-3">
+      <b-tab title="File" active>
+        <b-form-group
+            label="File input:"
+            label-for="file-input"
+            description="file will be loaded into the database, supported formats: *.zip, *.js, *.java, *.cpp, *.c, *.py, *.h, *.hpp
+              non-binary files."
+            class="mb-0"
         >
-        </b-form-checkbox-group>
+          <b-form-file
+              id="file-input"
+              v-model="files"
+              :state="Boolean(files)"
+              placeholder="Choose a file or drop it here..."
+              drop-placeholder="Drop file here..."
+              multiple accept=".js, .c, .cpp, .java, .py, .h, .hpp, .zip"
+          ></b-form-file>
+        </b-form-group>
 
-        <!--        Footer content -->
-        <b-button variant="primary" v-on:click="submit()">Start searching</b-button>
-      </div>
-    </div>
+        <b-alert v-model="isEmptyFileInput" variant="danger" dismissible>
+          You must select a file
+        </b-alert>
+
+        <b-button variant="primary" v-on:click="submitFile()" style="margin-top: 10px">
+          Start searching
+        </b-button>
+      </b-tab>
+
+      <b-tab title="GitHub">
+        <b-alert v-model="isEmptyRepoInput" variant="danger" dismissible>
+          You must enter all fields.
+        </b-alert>
+
+        <b-form-group
+            label="GitHub repository link:"
+            label-for="github-url"
+            description="repository will be loaded into the database"
+            class="mb-0"
+        >
+          <b-form-input
+              id="github-url"
+              placeholder="Enter your repository..."
+              v-model="repository"
+          ></b-form-input>
+        </b-form-group>
+
+        <b-form-checkbox v-model="isPrivateRepo" name="check-button" style="margin-top: 10px" switch>
+          private repository
+        </b-form-checkbox>
+
+        <div class="container" id="app-container" v-if="isPrivateRepo" style="margin-top: 10px">
+          <b-form-group
+              label="Your GitHub nickname:"
+              label-for="login"
+              class="mb-0"
+          >
+            <b-form-input
+                id="login"
+                placeholder="Enter Login..."
+                v-model="login"
+            ></b-form-input>
+          </b-form-group>
+
+          <b-form-group
+              label="Your organization:"
+              label-for="organization"
+              class="mb-0"
+              style="margin-top: 10px"
+          >
+            <b-form-input
+                id="organization"
+                placeholder="Enter Organization..."
+                v-model="organization"
+            ></b-form-input>
+          </b-form-group>
+
+          <b-form-group
+              label="Your token:"
+              label-for="token"
+              class="mb-0"
+              style="margin-top: 10px"
+          >
+            <b-form-input
+                id="token"
+                placeholder="Enter Token..."
+                v-model="token"
+            ></b-form-input>
+          </b-form-group>
+        </div>
+
+        <b-button variant="primary" v-on:click="submitRepository()" style="margin-top: 10px">
+          Start searching
+        </b-button>
+      </b-tab>
+
+    </b-tabs>
   </div>
 </template>
 
@@ -84,58 +114,72 @@ export default {
   name: "Search",
   data() {
     return {
-      file1: null,
-      file2: null,
-
+      files: [],
+      repository: null,
+      login: null,
+      organization: null,
+      token: null,
       isLoading: false,
-      fullPage: true,
-
-      selectedSearchOptions: [],
-      selectedMethodsOptions: [],
-      selectedOpenSourceOptions: [],
-
-      searchOptions: [
-        {text: 'Database search', value: 'database'},
-        {text: 'Open source search', value: 'opensource', notEnabled: true},
-      ],
-      methodsOptions: [
-        {text: 'Levenshtein distance', value: 'levenshtein'},
-        {text: 'PlagCheck', value: 'plagcheck', notEnabled: true},
-      ],
-      openSourceOptions: [
-        {text: 'StackOverflow', value: 'stackoverflow', notEnabled: true},
-        {text: 'GitHub', value: 'github', notEnabled: true},
-      ]
+      isFullPage: true,
+      isEmptyFileInput: false,
+      isEmptyRepoInput: false,
+      isPrivateRepo: false
     }
   },
   methods: {
-    /*
-    #TODO
-      - нормальная обработка чекбокса;
-    */
-    submit() {
-        if (this.selectedSearchOptions.length && this.selectedMethodsOptions.length && this.file1) {
-          let formData = new FormData();
-          formData.append('file', this.file1);
+    submitFile() {
+      if (this.files.length !== 0) {
+        this.isEmptyFileInput = false;
+        let formData = new FormData();
+        for(let i = 0; i < this.files.length; ++i)
+          formData.append('file', this.files[i]);
 
-          const intervalID = setInterval(() => {
-            console.log('загрузка');
-            this.isLoading = true;
-          }, 200);
+        const intervalID = setInterval(() => {
+          console.log('загрузка');
+          this.isLoading = true;
+        }, 200);
 
-
-          this.$store.dispatch('SET_RESULT', formData)
-              .then(() => {
-                this.$store.dispatch('SET_FILENAME', this.file1.name)
-                clearInterval(intervalID);
-                console.log('...загрузка завершена');
-                this.isLoading = false;
-                router.push('./search/result');
-          });
-        }
-      },
-
+        this.$store.dispatch('SET_RESULTS',  formData)
+            .then(() => {
+              clearInterval(intervalID);
+              console.log('...загрузка и обработка файлов завершена');
+              this.isLoading = false;
+              router.push('./search/result');
+            });
+      } else {
+        this.isEmptyFileInput = true;
+      }
     },
+
+    submitRepository() {
+      if((this.repository !== null && !this.isPrivateRepo) || (this.repository !== null && this.organization !== null && this.login !== null && this.token !== null && this.isPrivateRepo)) {
+        console.log(this.repository);
+
+        const intervalID = setInterval(() => {
+          console.log('загрузка');
+          this.isLoading = true;
+        }, 200);
+
+        let params = {
+          status: this.isPrivateRepo,
+          repository: this.repository,
+          login: this.login,
+          organization: this.organization,
+          token: this.token,
+        }
+        this.$store.dispatch('SET_GIT_RESULTS', params)
+            .then(() => {
+              clearInterval(intervalID);
+              console.log('...загрузка и обработка файлов завершена');
+              this.isLoading = false;
+              router.push('./search/result');
+            });
+      } else {
+        this.isEmptyRepoInput = true;
+      }
+    }
+
+  },
 
   watch: {
     $route(to, from) {
