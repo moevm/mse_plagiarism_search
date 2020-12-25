@@ -1,6 +1,7 @@
 import subprocess
 import tempfile
 
+
 def prettierJavaCppFiles(code):
     fp = tempfile.NamedTemporaryFile(suffix='.txt', prefix='')
     fp.write(bytes(code, encoding='utf-8'))
@@ -9,6 +10,3 @@ def prettierJavaCppFiles(code):
     prettier_code = fp.read().decode('utf-8')
     fp.close()
     return prettier_code
-
-
-

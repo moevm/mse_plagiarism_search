@@ -23,13 +23,16 @@ def prettierJs(code):
     res = jsbeautifier.beautify(code)
     return res
 
+
 def prettierCode(code, filename):
     try:
         if filename.endswith('.py'):
             return prettierPython(code)
         elif filename.endswith('.js'):
             return prettierJs(code)
-        elif filename.endswith('.cpp') or filename.endswith('.h') or filename.endswith('.c') or filename.endswith('.java'):
+        elif filename.endswith('.cpp') or filename.endswith(
+            '.h'
+        ) or filename.endswith('.c') or filename.endswith('.java'):
             return prettierJavaCppFiles(code)
         else:
             return code

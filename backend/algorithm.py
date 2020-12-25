@@ -7,6 +7,7 @@ import zipfile
 import tempfile
 import json
 
+
 def getAllMetaphones():
     metaphones = {}
     texts = {}
@@ -20,7 +21,9 @@ def getAllMetaphones():
         metaphones.setdefault(row[0], []).append(row[1])
         texts.setdefault(row[0], []).append(row[2])
         if not files.get(row[0]):
-            q = Query.from_(db.tables["File"]).select("path").where(db.tables["File"].id == int(row[0]))
+            q = Query.from_(
+                db.tables["File"]
+            ).select("path").where(db.tables["File"].id == int(row[0]))
             res = executeQ(q, True)
             for row_ in res:
                 files[row[0]] = row_[0]
@@ -30,7 +33,7 @@ def getAllMetaphones():
 
 
 @app.route('/checkFile/<fileId>', methods=['GET'])
-def trueAlgo(fileId, needList = False, allMetaphones = None):
+def trueAlgo(fileId, needList=False, allMetaphones=None):
     allTime = time.time()
     fileId = int(fileId)
     metaphones = {}
@@ -73,7 +76,6 @@ def trueAlgo(fileId, needList = False, allMetaphones = None):
     for k in dropKeys:
         allKeys.remove(k)
 
-
     for val in fileMetaphones:
 
         stringsFile.append(texts[fileId][counterF])
@@ -103,7 +105,9 @@ def trueAlgo(fileId, needList = False, allMetaphones = None):
                 if abs(len(val2) - len(val)) > 3:
                     counter += 1
                     continue
-                if len(val) > 1 and len(val2)>1 and ((val2[0] != val[0]) or (val2[1] != val[1])):
+                if len(val) > 1 and len(val2) > 1 and (
+                    (val2[0] != val[0]) or (val2[1] != val[1])
+                ):
                     counter += 1
                     continue
                 maxD = min(len(val), len(val2), 7) // 2 + 2
@@ -154,8 +158,6 @@ def trueAlgo(fileId, needList = False, allMetaphones = None):
 
         lastFile = curFile
 
-
-
         counterF += 1
 
     coincidences = 0
@@ -185,17 +187,23 @@ def trueAlgo(fileId, needList = False, allMetaphones = None):
                 currentCombo = combo[i] - 1
                 comboToAdd = 1
 
-    divisor = (len(stringsFile)-empty)
+    divisor = (len(stringsFile) - empty)
     if divisor == 0:
         divisor = 1
-    print("RESULT: ", round(coincidences/divisor*100, 1))
-    fullResult = [stringsFile, stringsRelevant, stringsFrom, combo, distances, result, round(coincidences/divisor*100, 1), files[fileId]]
+    print("RESULT: ", round(coincidences / divisor * 100, 1))
+    fullResult = [
+        stringsFile, stringsRelevant, stringsFrom, combo, distances, result,
+        round(coincidences / divisor * 100, 1), files[fileId]
+    ]
     print("--- %s seconds ---" % (time.time() - start_time))
     if needList:
         return fullResult
     else:
         jsonResult = json.dumps(fullResult)
-        q = Query.into(db.tables["SearchResult"]).columns("result", "createdAt").insert(jsonResult, functions.CurTimestamp())
+        q = Query.into(
+            db.tables["SearchResult"]
+        ).columns("result",
+                  "createdAt").insert(jsonResult, functions.CurTimestamp())
         executeQ(q)
         return jsonify(fullResult)
 
@@ -212,9 +220,7 @@ def loadAndCheckFile():
             fileId = addOneFile(app.config['UPLOAD_FOLDER'], filename)[1]
             #TODO: Удалить файл после всех операций?
             return trueAlgo(fileId)
-        elif file and (
-            allowed_archive(file.filename)
-        ):
+        elif file and (allowed_archive(file.filename)):
             filename = secure_filename(file.filename)
             file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
             with temporary_directory() as tmp:  #игнорируем ошибки.
@@ -231,11 +237,14 @@ def loadAndCheckFile():
                         print(val)
                         results.append(trueAlgo(val[1], True, allMetaphones))
                     jsonResult = json.dumps(results)
-                    q = Query.into(db.tables["SearchResult"]).columns("result", "createdAt").insert(jsonResult, functions.CurTimestamp())
+                    q = Query.into(db.tables["SearchResult"]).columns(
+                        "result", "createdAt"
+                    ).insert(jsonResult, functions.CurTimestamp())
                     executeQ(q)
                     return jsonify(results)
         else:
             return jsonify({"error": "failed"})
+
 
 @app.route('/checkFilesByEntries', methods=['POST'])
 def checkFilesByEntries():
@@ -243,12 +252,15 @@ def checkFilesByEntries():
     listEntries = json.loads(entries)
     results = []
     for v in listEntries:
-        q = Query.from_(db.tables["File"]).select("id").where(db.tables["File"].entryId == int(v))
+        q = Query.from_(
+            db.tables["File"]
+        ).select("id").where(db.tables["File"].entryId == int(v))
         res = executeQ(q, True)
         allMetaphones = getAllMetaphones()
         for val in res:
             results.append(trueAlgo(val[0], True, allMetaphones))
 
     return jsonify(results)
+
 
 #trueAlgo(8)
