@@ -1,0 +1,39 @@
+version: "3.5"
+
+services:
+    pgadmin:
+        container_name: "mse-plagiarism-pg-admin"
+        restart: unless-stopped
+        image: dpage/pgadmin4
+        ports:
+            - 81:80
+        networks:
+            - postgres
+        volumes:
+            - pgadmin:/root/.pgadmin
+        environment:
+            PGADMIN_DEFAULT_EMAIL: thexcloud@gmail.com
+            PGADMIN_DEFAULT_PASSWORD: freedom_is_a_state_of_mind
+        depends_on:
+            - postgres
+    postgres:
+        restart: unless-stopped
+        image: postgres
+        container_name: "mse-plagiarism-pg-docker"
+        ports:
+            - 5432:5432
+        networks:
+            - postgres
+        environment:
+            POSTGRES_USER: postgres
+            POSTGRES_PASSWORD: postgres
+            POSTGRES_DB: postgres
+        volumes:
+            - postgres_mse_plagiarism:/data/postgres
+networks:
+    postgres:
+        driver: bridge
+
+volumes:
+    postgres_mse_plagiarism:
+    pgadmin:
