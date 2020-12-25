@@ -24,10 +24,11 @@ export default {
 
   methods: {
     submitResult(id) {
+
       const intervalID = setInterval(() => {
         console.log('загрузка');
         this.isLoading = true;
-      }, 200);
+      }, 100);
 
 
       this.$store.dispatch('SET_HISTORY_RESULTS',  id)
@@ -40,7 +41,7 @@ export default {
       },
 
     getHistory() {
-      axios.get(`${URL + '/getAllResults'}`)
+      axios.get(`${URL + 'getAllResults'}`)
           .then(res => {
             console.log(res.data)
             for (let i = 0; i < res.data.length; ++i) {

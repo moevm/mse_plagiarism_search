@@ -141,24 +141,21 @@ export default {
       this.currentPage = 1
     },
 
-    submitFile() {
-      for(let i = 0; i < this.files.length; i++ ) {
+    async submitFile() {
+      for(let i = 0; i < this.files.length; ++i) {
         let formData = new FormData();
         formData.append('file', this.files[i]);
-
-        axios.post(`${URL+ 'upload'}`,
+        await axios.post(`${URL+ 'upload'}`,
             formData,
             {
               headers: {
                 'Content-Type': 'multipart/form-data; charset=utf-8'
               }
-            })
-            .then(() => {
+            }).then(() => {
               this.items = [];
-              this.getFiles();
-            })
-            .catch(() => {
-            });
+          this.getFiles();
+
+        })
       }
     },
 

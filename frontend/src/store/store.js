@@ -2,7 +2,6 @@ import Vuex from 'vuex';
 import Vue from 'vue';
 import Axios from 'axios';
 import {URL} from '@/url.config';
-import axios from "axios";
 
 Vue.use(Vuex)
 
@@ -110,7 +109,7 @@ export default new Vuex.Store({
         },
 
         SET_HISTORY_RESULTS: async (injectee, payload) => {
-            axios.get(`${URL + 'getResult/' + payload}`)
+            await Axios.get(`${URL + 'getResult/' + payload}`)
                 .then(res => {
                     for(let i = 0; i < res.data.length; ++i)
                     {
